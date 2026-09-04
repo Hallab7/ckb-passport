@@ -22,6 +22,8 @@ export {
   validateDidCkbDocument,
 } from "./document.js";
 export type { DidCkbDocument, DidDocumentDecodeResult } from "./document.js";
+export { selectVerificationMethod } from "./verification-method.js";
+export type { VerificationMethodSelection } from "./verification-method.js";
 export {
   hashCkbPersonalMessage,
   recoverableHexToRawSignatureHex,
