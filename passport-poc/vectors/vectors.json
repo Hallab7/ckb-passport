@@ -51,5 +51,325 @@
         }
       }
     }
+  },
+  {
+    "name": "wrong-domain",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "evil.test wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongDom123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "HQQtT5KKvtv9uYOs5exvGLvVjNLaX7JR3oikHCSPIXcobEa3AoADBcprKmZSJDj1IBg8XqHS0GAQjebZVAJD9A"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "domain_mismatch",
+    "reason": "message domain does not match expected origin host",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "wrong-uri-origin",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://evil.test/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongUri123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "cu3_O-3lNN00gWFBUts1XNR6PKBMdvi7BASH_CHSm-JCrc1v7AgTHT4pNMLNCxKHYufJ07mdnLtwxzOZe2461Q"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "uri_origin_mismatch",
+    "reason": "message URI origin does not match expected origin",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "expired-message",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Expired123456\nIssued At: 2026-09-04T07:50:00Z\nExpiration Time: 2026-09-04T07:55:00Z",
+      "mode": "wallet",
+      "signature": "FjJ2zBpWHOGz1ZS4Bl_3Y-kwHNmgJSTvH796CPgluRxLoPugQdcuV8h_abY0ypLYl1s7yXk58mUJhXxL90JTyA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "message_expired",
+    "reason": "message is past expiration time",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "issued-at-future",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Future123456\nIssued At: 2026-09-04T08:02:01Z\nExpiration Time: 2026-09-04T08:04:00Z",
+      "mode": "wallet",
+      "signature": "abjoyy-H6BLo1gBcQnd92fEQAXOldrWr0b45XdM2E3FArtA5Q2va8oyOLp_mh-l5F_TYo8V_M7q-wjdWIBdSjw"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "issued_at_too_far_future",
+    "reason": "message issuedAt is beyond allowed future skew",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "replayed-nonce",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Replay123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "12KOxLRLOm_Tdms-vOUwcl-rHZgjPdMvnq5jxD_F1ws6yjPjnphInfc4ooqG7RIPcKLWupoMOAXYC8-u-hGZ3g"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "nonce_consumed",
+    "reason": "nonce was already consumed",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "consumed",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "key-id-absent",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: MissingKey123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "qAjXEe5u0TIVFCSR4YO81q1lvJdrrhjOB3lppZy8A8AAOGetfff7qLNvmp3prJvFth3lD35PVYsAuCATR1J5lw",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiOHI5TFhYZ1IwbmJqS3J3M2JPNnFSWkJQaGVHOEEtbGZNY1FpOHptbkcwWSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "verification_method_missing",
+    "reason": "DID document does not contain the requested keyId",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {}
+      }
+    }
+  },
+  {
+    "name": "unsupported-multicodec",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: BadCodec123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "qyoiwltc7vmBB2ipl1I1mivlvcOnxwvkVvcVwLIglbNJKpqFfHgc73dKtAoNnbiVTPzq6i5gxYwCY7aJyB0vLQ",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiYnhaa0tNMG4tZHJHYzk5ZzZWcTdlSTV3cVY5OUREdG1XRlhrTFlBSTNjayIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "verification_method_invalid",
+    "reason": "DID document contains an unsupported did:key multicodec",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:z6MkiTBz1K9jDk4h6x3Va8r"
+        }
+      }
+    }
+  },
+  {
+    "name": "high-s-signature",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: HighSig123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "JBOqlXcLA8tsRKQT7dKDL9a_vHPbuwfJbLgTtQtRhenzJ9QfsK6ECsjsqw2Ky9nN9Ms5PGV10Yt0LZcT8xHTig"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "signature_high_s",
+    "reason": "incoming wallet signature is high-S",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "webauthn-client-origin-mismatch",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: OriginBad123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "DYPwYAbvarsp69sliFcsz7TWTd-sUZQZBvJN2iiEFx1bcR2nfymlUb2Ypk1CZDhtRjNyY3eDTpULPZf0JgnjCQ",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiTFp6LVhlRU1GU3pJcldUZWQ1RS1jckdCZ3dGZWE2azljeUdQTDd5NXlZbyIsIm9yaWdpbiI6Imh0dHA6Ly9ldmlsLnRlc3QifQ",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "client_data_origin_mismatch",
+    "reason": "WebAuthn clientDataJSON origin does not match expected origin",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
+        }
+      }
+    }
+  },
+  {
+    "name": "webauthn-challenge-mismatch",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: ChallengeBad123\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "gCem2Ev8sJ7_nSmW-RuIVig6zKm8oSxP_gF3PPIw5X8pMzN5Au_60bPOmy8dRoP23JRDzMacqwmA_Mz_Cf4lZg",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiMlNtS0VOR3djMWczM0V2WVhheGtHdzg4N3lla2ZsMVRwVTh2UDFzdnpfbyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "challenge_mismatch",
+    "reason": "WebAuthn challenge is not SHA-256(message)",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
+        }
+      }
+    }
+  },
+  {
+    "name": "webauthn-user-present-clear",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: UserPresent123\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "vXG-BGneTumfAJW2mJPWMZRkMrDXCHRoYKBmi9P6nDBJh0LwdGG7mWu1nS3uCFvOdQtKKkN369ZAYbQvs5H4FA",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiWEI0dG83M1l1Sl9LVTBxcE92eE8yX0wyN0ZZZ2RUU1VuS1A3UDFQeV9TQSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MAAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "user_present_required",
+    "reason": "WebAuthn authenticator data has User Present bit clear",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
+        }
+      }
+    }
+  },
+  {
+    "name": "did-zero-live-cells",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: ZeroCells123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "unB9qEhEPG8ZQA10Wp207g0kxLkS6b0mG7q2IL53d4s5AXsybTSXttFgkVMPOzDxwFBLYgMuXH7QkYro9oJ1pg"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "did_cell_resolve_failed",
+    "reason": "DID resolves to zero live cells",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 0
+    }
   }
 ]

@@ -111,4 +111,10 @@ time. Tests verify expiry, clearing, token format, and the absence of address or
 
 The PoC now has a `vectors/vectors.json` artifact and vector runner. The initial vectors include a
 positive local wallet fixture and a positive local WebAuthn fixture, each with a deterministic DID
-document resolver fixture and issued nonce state. Negative vectors are added in the next checkpoint.
+document resolver fixture and issued nonce state.
+
+The required negative vector matrix is also present: wrong domain, wrong URI origin, expired
+message, future `issuedAt`, replayed nonce, absent `keyId`, unsupported multicodec, high-S
+signature, WebAuthn client origin mismatch, WebAuthn challenge mismatch, WebAuthn User Present
+clear, and zero live DID cells. The vector runner checks each negative vector against its specific
+expected failure code.
