@@ -127,3 +127,12 @@ optional captured live proof file, issues a DID-only demo session, and replays t
 confirm `nonce_consumed`. The live drill has not been executed in this shell because
 `CKB_PASSPORT_LIVE_DID`, `CKB_PASSPORT_AUTH_DID_KEY`, and `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY` are
 not configured.
+
+## Explorer Evidence Status
+
+The evidence collector targets the Pudge testnet explorer at
+`https://pudge.explorer.nervos.org`, which the current Nervos documentation lists as the public CKB
+testnet explorer. This checkout has no live DID update transaction hash, so
+`EXPLORER-EVIDENCE.md` records the evidence as not captured and `npm run evidence:explorer` fails
+with `missing_explorer_evidence` until the live DID, passkey `did:key`, and update transaction hash
+are supplied.

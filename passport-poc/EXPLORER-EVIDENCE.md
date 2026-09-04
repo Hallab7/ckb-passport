@@ -1,0 +1,27 @@
+# Explorer Evidence
+
+Status: not captured in this checkout.
+
+The PoC uses the CKB Pudge testnet explorer at:
+
+```text
+https://pudge.explorer.nervos.org
+```
+
+Run:
+
+```powershell
+npm run evidence:explorer
+```
+
+Required values:
+
+| Field | Environment variable | Status |
+|---|---|---|
+| Testnet DID | `CKB_PASSPORT_LIVE_DID` | Missing |
+| Passkey verification method | `CKB_PASSPORT_AUTH_DID_KEY` | Missing |
+| DID update transaction hash | `CKB_PASSPORT_UPDATE_TX_HASH` | Missing |
+| Capacity in shannons | `CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` | Optional, missing |
+
+When live evidence is available, the script prints the transaction link and confirms that the
+verification method begins `did:key:zDna`.

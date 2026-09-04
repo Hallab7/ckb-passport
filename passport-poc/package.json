@@ -17,6 +17,8 @@
     "check:roundtrip": "node scripts/check-did-roundtrip.mjs",
     "drill:testnet": "node scripts/e2e-testnet-drill.mjs",
     "drill:check": "node scripts/e2e-testnet-drill.mjs --check",
+    "evidence:explorer": "node scripts/explorer-evidence.mjs",
+    "evidence:check": "node scripts/explorer-evidence.mjs --check",
     "demo": "node scripts/run-demo.mjs",
     "demo:check": "node scripts/run-demo.mjs --check"
   },

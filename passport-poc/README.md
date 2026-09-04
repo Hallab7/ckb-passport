@@ -14,6 +14,7 @@ npm run audit:scaffold
 npm run probe:sdk
 npm run demo
 npm run drill:check
+npm run evidence:check
 ```
 
 `npm run demo` is the one-command local startup path after dependencies are installed. It builds
@@ -31,6 +32,16 @@ npm run drill:testnet
 Without `CKB_PASSPORT_LIVE_DID` and `CKB_PASSPORT_AUTH_DID_KEY`, the drill exits with
 `missing_e2e_testnet_inputs`. Set `CKB_PASSPORT_LIVE_PROOF_FILE` to a captured proof JSON file to
 check proof verification, DID-only session issuing, and replay rejection from the command line.
+
+Explorer evidence is collected with:
+
+```powershell
+npm run evidence:explorer
+```
+
+The evidence script validates the configured testnet DID, passkey `did:key:zDna...`, update
+transaction hash, and optional capacity value, then prints a Pudge explorer transaction URL.
+`EXPLORER-EVIDENCE.md` records the current evidence status.
 
 The live DID update gate is opt-in:
 
