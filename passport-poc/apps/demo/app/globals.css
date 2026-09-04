@@ -82,7 +82,7 @@ h2 {
 .app-shell {
   min-height: 100vh;
   padding: 0 32px 48px;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .announcement-bar,
@@ -416,11 +416,14 @@ h2 {
 
 .side-stack {
   position: sticky;
-  top: 108px;
-  max-height: calc(100vh - 124px);
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 88px);
+  max-height: calc(100vh - 88px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 4px;
+  padding: 16px 4px 16px 0;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
@@ -436,6 +439,11 @@ h2 {
 
 .side-stack::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.side-stack .evidence-ledger {
+  flex: 1 0 auto;
+  align-content: start;
 }
 
 .identity-card,
@@ -1015,9 +1023,11 @@ pre {
 
   .side-stack {
     position: static;
+    display: grid;
     max-height: none;
+    height: auto;
     overflow: visible;
-    padding-right: 0;
+    padding: 0;
   }
 
   .metrics-strip,
