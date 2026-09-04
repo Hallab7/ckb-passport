@@ -615,7 +615,7 @@ export function PassportDemo() {
             Paste a DID, publish auth-1, and verify the passkey session from
             one browser console.
           </p>
-          <div className="hero-ctas">
+          {/* <div className="hero-ctas">
             <ActionButton
               icon={<Link2 size={16} />}
               label="Resolve DID"
@@ -633,7 +633,7 @@ export function PassportDemo() {
               disabled={!domainReady || !hasResolvedDid}
               variant="secondary"
             />
-          </div>
+          </div> */}
         </div>
 
         <aside className="market-snapshot" aria-label="Live DID snapshot">
@@ -667,14 +667,14 @@ export function PassportDemo() {
         </aside>
       </section>
 
-      <section className="metrics-strip" aria-label="Live metrics">
+      {/* <section className="metrics-strip" aria-label="Live metrics">
         <MetricTile label="DID State" value={didStateLabel} />
         <MetricTile label="Auth Key" value={authKeyLabel} />
         <MetricTile label="Update Tx" value={displayTxHash ? shortenMiddle(displayTxHash, 6, 6) : "Pending"} />
         <MetricTile label="Replay" value={replayStateLabel} />
-      </section>
+      </section> */}
 
-      <section className="feature-editorial">
+      {/* <section className="feature-editorial">
         <div>
           <span className="section-heading">Feature Editorial</span>
           <h2>Every proof value is visible before the next action.</h2>
@@ -693,10 +693,10 @@ export function PassportDemo() {
             value={config?.network ?? "loading"}
           />
         </div>
-      </section>
+      </section> */}
 
       <section className="product-showcase" id="product">
-        <div className="showcase-head">
+        {/* <div className="showcase-head">
           <div>
             <span className="section-heading">Product Showcase</span>
             <h2>Live relying-party console</h2>
@@ -705,7 +705,7 @@ export function PassportDemo() {
             label={`${completedStepCount}/${steps.length} complete`}
             state={completedStepCount === steps.length ? "pass" : "idle"}
           />
-        </div>
+        </div> */}
 
         <section className="dashboard-layout">
           <section className="main-stack">
@@ -725,7 +725,7 @@ export function PassportDemo() {
               <div className="identifier-mark">CKB</div>
               <div className="identifier-content">
                 <span>Your identifier</span>
-                <strong>{did}</strong>
+                <strong>{did || "Not set"}</strong>
                 <small>
                   {displayTxHash
                     ? `TX ${shortenMiddle(displayTxHash).toUpperCase()} / CAPACITY ${formatCkb(displayCapacityShannons)} CKB`
@@ -735,14 +735,14 @@ export function PassportDemo() {
             </div>
 
             <div className="identity-actions">
-              <ActionButton
+              {/* <ActionButton
                 icon={<Clipboard size={16} />}
                 label="Copy DID"
                 title="Copy DID"
                 busy={false}
                 onClick={() => copyValue("did", did)}
                 variant="secondary"
-              />
+              /> */}
               {explorerUrl ? (
                 <a className="link-button" href={explorerUrl} target="_blank" rel="noreferrer">
                   <ExternalLink size={16} aria-hidden="true" />

@@ -452,7 +452,7 @@ h2 {
   max-height: calc(100vh - 88px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 16px 4px 16px 0;
+  padding: 0px 4px 16px 0;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
