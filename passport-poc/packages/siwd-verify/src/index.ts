@@ -74,3 +74,8 @@ export type {
   VerifyWalletSignatureOptions,
   VerifyWalletSignatureResult,
 } from "./wallet-verify.js";
+export { verifyWebAuthnSignature } from "./webauthn-verify.js";
+export type {
+  VerifyWebAuthnSignatureOptions,
+  VerifyWebAuthnSignatureResult,
+} from "./webauthn-verify.js";

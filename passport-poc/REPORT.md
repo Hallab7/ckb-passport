@@ -91,3 +91,12 @@ requires a secp256k1 DID verification method, decodes the raw base64url signatur
 and verifies ECDSA over the CCC CKB personal-message hash. Tests cover valid signatures, tampered
 messages, high-S rejection, wrong public keys, wrong proof mode, and wrong verification method
 curve.
+
+## WebAuthn Signature Verification Status
+
+WebAuthn verification now requires a P-256 DID verification method, checks
+`clientDataJSON.type == "webauthn.get"`, verifies origin and challenge binding, checks the
+authenticator `rpIdHash`, requires the User Present bit, enforces low-S on the incoming raw
+signature, and verifies ES256 over the full `authenticatorData || SHA-256(clientDataJSON)` payload.
+Tests cover valid assertions, origin mismatch, challenge mismatch, User Present clear, wrong rpId
+hash, wrong curve, tampered client data, tampered authenticator data, and high-S rejection.
