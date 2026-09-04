@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "audit:scaffold": "node scripts/audit-scaffold.mjs",
-    "build": "npm run build --workspaces --if-present",
+    "build": "node scripts/build-workspaces.mjs",
     "probe:sdk": "node scripts/probe-did-sdk.mjs",
     "test": "node scripts/test-workspaces.mjs",
     "demo": "npm run dev -w @ckb-passport/demo"

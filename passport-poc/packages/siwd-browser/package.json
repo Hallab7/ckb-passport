@@ -10,5 +10,9 @@
   },
   "exports": {
     ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "@ckb-passport/siwd-core": "^0.0.0",
+    "cborg": "^4.5.8"
   }
 }
