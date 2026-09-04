@@ -5,13 +5,14 @@
   "type": "module",
   "description": "Node verifier for Sign-In with CKB DID proofs.",
   "scripts": {
-    "build": "node scripts/scaffold-ok.mjs",
-    "test": "node scripts/scaffold-ok.mjs"
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
   },
   "exports": {
     ".": "./dist/index.js"
   },
   "dependencies": {
+    "@ckb-ccc/core": "^1.19.1",
     "@ckb-ccc/did-ckb": "^0.2.9"
   }
 }

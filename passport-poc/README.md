@@ -49,3 +49,26 @@ Observed capabilities:
 
 The probe does not write to CKB. It only imports the package, checks exports, reads known testnet
 script metadata from CCC's local config, and verifies local encode/decode helpers.
+
+## Testnet Configuration
+
+Runtime config is loaded by `@ckb-passport/siwd-verify`.
+
+Defaults:
+
+| Setting | Default |
+|---|---|
+| `CKB_PASSPORT_NETWORK` | `ckb-testnet` |
+| `CKB_RPC_URL` | `https://testnet.ckb.dev/` |
+| `CKB_INDEXER_URL` | `https://testnet.ckb.dev/indexer` |
+| `SIWD_EXPECTED_ORIGIN` | `http://localhost:3000` |
+
+`CKB_DID_CODE_HASH` and `CKB_DID_HASH_TYPE` default to CCC's testnet
+`KnownScript.DidCkb` values:
+
+```text
+CKB_DID_CODE_HASH=0x510150477b10d6ab551a509b71265f3164e9fd4137fcb5a4322f49f03092c7c5
+CKB_DID_HASH_TYPE=type
+```
+
+Mainnet runtime config is rejected in this PoC package to preserve the testnet-only scope.
