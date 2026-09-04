@@ -43,6 +43,7 @@ npm run demo:check
 npm run drill:check
 npm run evidence:check
 npm run recording:check
+npm run acceptance:check
 ```
 
 `npm test` runs every package test, including `vectors/vectors.json`. The live resolver test is
@@ -196,6 +197,17 @@ npm run recording:verify
 ```
 
 Set `CKB_PASSPORT_RECORDING` to override the default `evidence/passport-poc-recording.mp4` path.
+
+## Final Acceptance
+
+`ACCEPTANCE.md` lists every PoC acceptance criterion and its current status. Run:
+
+```powershell
+npm run acceptance:verify
+```
+
+In this checkout it reports `live_acceptance_incomplete` because live DID update, explorer, and
+recording evidence are not present.
 
 ## Vectors
 

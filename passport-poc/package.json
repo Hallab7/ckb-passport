@@ -22,6 +22,8 @@
     "audit:h4": "node scripts/address-audit.mjs",
     "recording:check": "node scripts/recording-check.mjs --check",
     "recording:verify": "node scripts/recording-check.mjs",
+    "acceptance:check": "node scripts/final-acceptance.mjs --check",
+    "acceptance:verify": "node scripts/final-acceptance.mjs",
     "demo": "node scripts/run-demo.mjs",
     "demo:check": "node scripts/run-demo.mjs --check"
   },

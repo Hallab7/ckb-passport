@@ -116,3 +116,11 @@ place. The full project should not treat passkey-based Passport as de-risked unt
 on CKB testnet and the explorer/recording evidence is captured. If the live update rejects arbitrary
 P-256 `did:key` values or fails to round-trip, the fallback scope is wallet mode with the limitation
 documented here.
+
+## Final Acceptance Status
+
+`ACCEPTANCE.md` and `npm run acceptance:verify` track the original acceptance criteria. Local
+criteria pass: one-command startup is documented, vectors run under `npm test`, replay rejection is
+covered, H4 source/session audit passes, and this report states H1 through H4. Live criteria remain
+incomplete until a real testnet DID update, explorer transaction, platform-authenticator sign-in,
+and recording are captured.
