@@ -122,7 +122,7 @@ export function PassportDemo() {
   const [busy, setBusy] = useState<BusyAction | null>(null);
   const [copied, setCopied] = useState("");
   const [controlStatus, setControlStatus] = useState<ControlStatus>({
-    label: "Demo ready",
+    label: "Ready",
     state: "idle",
   });
   const [results, setResults] = useState<Record<string, JsonRecord>>(initialResults);
@@ -450,15 +450,8 @@ export function PassportDemo() {
 
   async function clearCurrentSession() {
     await run("clear", async () => {
-      setControlStatus({ label: "Clearing demo", state: "idle" });
       const body = await postJson("/api/session/clear", {});
       resetDemoState();
-      setControlStatus({
-        label: body.ok === true
-          ? "Demo cleared"
-          : `Clear failed: ${readString(body.message) || "Unknown error"}`,
-        state: body.ok === true ? "pass" : "blocked",
-      });
     });
   }
 
@@ -552,11 +545,11 @@ export function PassportDemo() {
 
   return (
     <main className="app-shell">
-      <section className="announcement-bar" aria-label="Demo environment">
+      {/* <section className="announcement-bar" aria-label="Demo environment">
         <span>Live testnet</span>
         <strong>{shortenMiddle(did, 18, 12)}</strong>
         <span>{config?.didUpdateInput ?? "loading"}</span>
-      </section>
+      </section> */}
 
       <header className="top-nav">
         <a className="nav-brand" href="#identity">
@@ -570,22 +563,22 @@ export function PassportDemo() {
           <a href="#register">Register</a>
           <a href="#update">Update</a>
           <a href="#signin">Sign In</a>
-          <a href="#trust">Trust</a>
+          {/* <a href="#trust">Trust</a> */}
         </nav>
         <div className="nav-actions">
           <div className="nav-action-row">
             <ActionButton
               icon={<Trash2 size={16} />}
-              label="Clear"
+              label="Reset"
               title="Clear session"
               busy={busy === "clear"}
               onClick={clearCurrentSession}
               variant="danger"
             />
           </div>
-          <span className={`control-status ${controlStatus.state}`} aria-live="polite">
+          {/* <span className={`control-status ${controlStatus.state}`} aria-live="polite">
             {controlStatus.label}
-          </span>
+          </span> */}
         </div>
       </header>
 
@@ -650,7 +643,7 @@ export function PassportDemo() {
             <SnapshotItem label="Update" value={updateStateLabel} />
             <SnapshotItem label="Replay" value={replayStateLabel} />
           </div>
-          <div className="signal-chart" aria-hidden="true">
+          {/* <div className="signal-chart" aria-hidden="true">
             <span style={{ height: "32%" }} />
             <span style={{ height: "64%" }} />
             <span style={{ height: "46%" }} />
@@ -659,7 +652,7 @@ export function PassportDemo() {
             <span style={{ height: "88%" }} />
             <span style={{ height: "70%" }} />
             <span style={{ height: "100%" }} />
-          </div>
+          </div> */}
         </aside>
       </section>
 
@@ -1080,10 +1073,10 @@ export function PassportDemo() {
         </div>
       </section>
 
-      <footer className="site-footer">
+      {/* <footer className="site-footer">
         <span>CKB Passport PoC</span>
         <span>{did}</span>
-      </footer>
+      </footer> */}
     </main>
   );
 }
