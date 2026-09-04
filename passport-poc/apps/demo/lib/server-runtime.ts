@@ -20,7 +20,6 @@ import {
 import { NextResponse, type NextRequest } from "next/server";
 
 export const SESSION_COOKIE = "ckb_passport_session";
-export const DEFAULT_DID = "";
 export const DEFAULT_KEY_ID = "auth-1";
 export const DEFAULT_FEE_RATE_SHANNONS_PER_KW = "1000";
 
@@ -65,7 +64,6 @@ export function configPayload(
     didHashType: config.didHashType,
     didUpdateInput: "browser-evm-wallet",
     hasServerDidLockSigner: Boolean(process.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY),
-    defaultDid: DEFAULT_DID,
     defaultKeyId: DEFAULT_KEY_ID,
     defaultFeeRateShannonsPerKw: DEFAULT_FEE_RATE_SHANNONS_PER_KW,
   };

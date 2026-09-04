@@ -49,7 +49,6 @@ const readme = readFileSync("README.md", "utf8");
 const addressAudit = readFileSync("ADDRESS-AUDIT.md", "utf8");
 const explorerEvidence = readFileSync("EXPLORER-EVIDENCE.md", "utf8");
 const recording = readFileSync("RECORDING.md", "utf8");
-const suppliedLiveDid = "did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng";
 
 const vectorNames = new Set(vectors.map((vector) => vector.name));
 const missingNegativeVectors = requiredNegativeVectors.filter(
@@ -68,10 +67,12 @@ const items = [
   {
     id: "live_did_resolution",
     status:
-      report.includes(suppliedLiveDid) && report.includes("targeted live resolver test")
+      report.includes("CKB_PASSPORT_LIVE_DID") &&
+      report.includes("targeted live resolver test")
         ? "pass"
         : "fail",
-    evidence: `${suppliedLiveDid} resolves from live testnet cells in the targeted resolver test`,
+    evidence:
+      "A supplied CKB_PASSPORT_LIVE_DID resolves from live testnet cells in the targeted resolver test",
   },
   {
     id: "passkey_did_update",

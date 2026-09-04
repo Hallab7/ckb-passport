@@ -2,9 +2,8 @@
 
 Date: 2026-09-04
 
-Status: local PoC implementation is complete and audited. The supplied testnet DID
-`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` resolves through the live resolver test, and the demo is
-now a guided Next.js UI for collecting the remaining live evidence. The live testnet drill,
+Status: local PoC implementation is complete and audited. The demo is now a guided Next.js UI for
+collecting the remaining live evidence. The live testnet drill,
 explorer proof, and recording are not complete in this checkout because no passkey `did:key`, DID
 lock private key, update transaction hash, captured proof file, or captured recording file is
 configured.
@@ -16,7 +15,8 @@ browser passkey, parse its attestation object, require COSE ES256/P-256, compres
 encode `did:key:zDna...`, prepare a `transferDidCkb` DID update, submit it through a DID cell lock
 signer, and re-resolve `verificationMethods["auth-1"]` byte-for-byte. Local unit tests cover the
 COSE conversion, DID update transformation, and round-trip checker. The supplied live DID is
-available for the gate, but the missing H3 evidence is still live: `CKB_PASSPORT_AUTH_DID_KEY`,
+available through `CKB_PASSPORT_LIVE_DID`, but the missing H3 evidence is still live:
+`CKB_PASSPORT_AUTH_DID_KEY`,
 `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY`, and a confirmed update transaction. Until those are supplied
 and confirmed, H3 remains unresolved rather than proven.
 
@@ -27,15 +27,14 @@ through `@ckb-ccc/did-ckb`, builds the testnet DID type script from
 `ccc.ClientPublicTestnet.getKnownScript(ccc.KnownScript.DidCkb)`, and queries live cells directly.
 Zero live cells fail as nonexistent or deactivated. Multiple live cells fail closed instead of
 choosing arbitrarily. Local resolver tests cover successful resolution, zero live cells, duplicate
-live cells, and malformed DID input. With
-`CKB_PASSPORT_LIVE_DID=did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng`, the targeted live resolver test
-passed on 2026-09-04:
+live cells, and malformed DID input. With `CKB_PASSPORT_LIVE_DID` set, the targeted live resolver
+test passed on 2026-09-04:
 
 ```text
 npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts
 ```
 
-That run resolved the supplied DID from live testnet cells, so H1 now has current read-only live DID
+That run resolved the supplied DID from live testnet cells, so H1 now has read-only live DID
 evidence in this checkout.
 
 The supplied DID currently decodes with no `verificationMethods` field. The verifier now normalizes

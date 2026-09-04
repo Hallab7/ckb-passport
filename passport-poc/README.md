@@ -47,8 +47,7 @@ npm run acceptance:check
 ```
 
 `npm test` runs every package test, including `vectors/vectors.json`. The live resolver test is
-skipped unless `CKB_PASSPORT_LIVE_DID` is set. In this checkout,
-`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` has passed the targeted live resolver test.
+skipped unless `CKB_PASSPORT_LIVE_DID` is set.
 
 ## Run The Demo
 

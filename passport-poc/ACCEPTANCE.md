@@ -14,7 +14,7 @@ Current result:
 | Acceptance item | Status | Evidence |
 |---|---|---|
 | One documented command runs the demo | Pass | `npm run demo` starts the guided Next.js demo; `npm run demo:check` passes. |
-| Supplied testnet DID resolves from live cells | Pass | `did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng`; targeted live resolver test passes. |
+| Supplied testnet DID resolves from live cells | Pass | Targeted live resolver test passes when `CKB_PASSPORT_LIVE_DID` is supplied. |
 | Passkey registration creates or updates a DID | Unresolved | Requires passkey `did:key` and DID lock signer for the supplied live DID. |
 | `verificationMethods["auth-1"]` begins `did:key:zDna` on explorer | Unresolved | Requires update transaction hash and explorer evidence. |
 | Sign-in works with platform authenticator only | Unresolved | Requires live browser recording after DID update. |

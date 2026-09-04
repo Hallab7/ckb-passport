@@ -29,7 +29,6 @@ type ConfigPayload = {
   didHashType: string;
   didUpdateInput: string;
   hasServerDidLockSigner: boolean;
-  defaultDid: string;
   defaultKeyId: string;
   defaultFeeRateShannonsPerKw: string;
 };
@@ -141,6 +140,8 @@ export function PassportDemo() {
   }, [browserOrigin, config]);
 
   const expectedOriginUrl = config?.expectedOrigin ?? "http://localhost:3000";
+  const trimmedDid = did.trim();
+  const hasDidInput = trimmedDid.length > 0;
   const resolverMethods = readRecord(results.resolver.verificationMethods);
   const resolvedDidKey = resolverMethods ? readString(resolverMethods[keyId]) : "";
   const explorerUrl = readString(results.explorer.updateTransactionUrl);
@@ -235,8 +236,11 @@ export function PassportDemo() {
   }
 
   async function resolveDid() {
+    if (!hasDidInput) {
+      return;
+    }
     await run("resolve", async () => {
-      const body = await postJson("/api/did/resolve", { did });
+      const body = await postJson("/api/did/resolve", { did: trimmedDid });
       const verificationMethods = readRecord(body.verificationMethods);
       const resolvedDidKey = verificationMethods
         ? readString(verificationMethods[keyId])
@@ -274,8 +278,8 @@ export function PassportDemo() {
           },
           user: {
             id: randomBuffer(16),
-            name: did,
-            displayName: keyId,
+            name: keyId,
+            displayName: `CKB Passport ${keyId}`,
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
           authenticatorSelection: {
@@ -612,6 +616,7 @@ export function PassportDemo() {
               title="Resolve DID"
               busy={busy === "resolve"}
               onClick={resolveDid}
+              disabled={!hasDidInput}
             />
             <ActionButton
               icon={<Fingerprint size={16} />}
@@ -775,6 +780,7 @@ export function PassportDemo() {
                     title="Resolve DID"
                     busy={busy === "resolve"}
                     onClick={resolveDid}
+                    disabled={!hasDidInput}
                   />
                 }
               >

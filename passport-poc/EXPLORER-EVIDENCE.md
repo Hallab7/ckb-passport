@@ -22,7 +22,7 @@ Required values:
 
 | Field | Environment variable | Status |
 |---|---|---|
-| Testnet DID | `CKB_PASSPORT_LIVE_DID` | Present: `did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` |
+| Testnet DID | `CKB_PASSPORT_LIVE_DID` | Supply before collecting explorer evidence. |
 | Passkey verification method | `CKB_PASSPORT_AUTH_DID_KEY` | Missing |
 | DID update transaction hash | `CKB_PASSPORT_UPDATE_TX_HASH` | Missing |
 | Capacity in shannons | `CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` | Optional; current DID cell read shows `55600000000` |

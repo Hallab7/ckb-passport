@@ -82,7 +82,6 @@ async function requestNonce() {
 async function registerPasskey() {
   await withButton(els.registerButton, async () => {
     requireWebAuthn();
-    const did = readInput(els.didInput, "DID");
     const keyId = readInput(els.keyIdInput, "Key ID");
     const credential = await navigator.credentials.create({
       publicKey: {
@@ -93,8 +92,8 @@ async function registerPasskey() {
         },
         user: {
           id: randomBytes(16),
-          name: did,
-          displayName: keyId,
+          name: keyId,
+          displayName: `CKB Passport ${keyId}`,
         },
         pubKeyCredParams: [{ type: "public-key", alg: -7 }],
         authenticatorSelection: {
