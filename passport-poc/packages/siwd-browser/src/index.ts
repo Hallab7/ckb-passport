@@ -6,6 +6,17 @@ export {
 } from "./passkey-did-key.js";
 export type { CoseP256PublicKey, PasskeyDidKeyResult } from "./passkey-did-key.js";
 export {
+  buildPasskeyRequestOptions,
+  derEcdsaSignatureToRaw,
+  PasskeyAssertionError,
+  signInWithPasskey,
+} from "./passkey-assertion.js";
+export type {
+  BrowserAssertionCredentials,
+  PasskeyAssertionOptions,
+  WebAuthnProofEnvelope,
+} from "./passkey-assertion.js";
+export {
   buildPasskeyCreationOptions,
   PasskeyRegistrationError,
   registerPasskey,

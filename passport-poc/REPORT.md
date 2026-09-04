@@ -55,3 +55,11 @@ and zero-live-cell failure.
 
 The live round trip has not been executed in this checkout because it requires the DID update
 transaction from the previous step to be submitted and confirmed first.
+
+## Passkey Assertion Builder Status
+
+The browser helper now signs `SHA-256(canonicalMessage)` as the WebAuthn challenge, converts the
+returned DER ECDSA signature to raw `r||s`, normalizes locally created P-256 signatures to low-S,
+and returns a versioned `webauthn` proof envelope. The envelope intentionally contains the DID,
+key ID, canonical message, signature, `clientDataJSON`, and `authenticatorData`; it contains no
+wallet address, lock script, transaction skeleton, or spend signature.

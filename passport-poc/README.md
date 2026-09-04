@@ -110,3 +110,24 @@ PoC envelope   = base64url(raw r||s, 64 bytes)
 
 This is verified against `SignerCkbPrivateKey`. Browser wallet behavior still needs live
 confirmation before H2 can rely on wallet mode outside local fixtures.
+
+## Passkey Proof Envelope
+
+`@ckb-passport/siwd-browser` can request a WebAuthn assertion with
+`SHA-256(canonicalMessage)` as the challenge and returns:
+
+```json
+{
+  "v": 1,
+  "did": "did:ckb:...",
+  "keyId": "auth-1",
+  "message": "...",
+  "mode": "webauthn",
+  "signature": "base64url(raw-r-s)",
+  "clientDataJSON": "base64url(...)",
+  "authenticatorData": "base64url(...)"
+}
+```
+
+WebAuthn DER ECDSA signatures are converted to raw `r||s` and normalized to low-S before the proof
+is returned. The proof envelope does not include a wallet address, lock script, or transaction.
