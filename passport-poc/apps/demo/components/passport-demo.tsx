@@ -7,18 +7,15 @@ import {
   Clipboard,
   ExternalLink,
   Fingerprint,
-  FileText,
   History,
   KeyRound,
   Link2,
   Loader2,
-  LockKeyhole,
   RefreshCw,
   RotateCcw,
   Send,
   Server,
   ShieldCheck,
-  Terminal,
   Trash2,
   Wallet,
 } from "lucide-react";
@@ -140,20 +137,11 @@ export function PassportDemo() {
     capacityShannons ||
     readString(results.update.capacityShannons) ||
     readString(results.resolver.capacityShannons);
-  const displayFeePaidShannons =
-    feePaidShannons || readString(results.update.feePaidShannons);
-  const activeSession = readRecord(results.session.session);
   const authenticated = results.session.authenticated === true;
   const hasLocalDidKey = didKey.startsWith("did:key:zDna");
   const hasUsableDidKey = displayDidKey.startsWith("did:key:zDna");
   const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(displayTxHash);
   const replayRejected = readString(results.verify.code) === "nonce_consumed";
-  const keyMatchLabel =
-    resolvedDidKey && didKey
-      ? resolvedDidKey === didKey
-        ? "matching"
-        : "different"
-      : "not checked";
   const didStateLabel = results.resolver.ok === true ? "Live" : "Unresolved";
   const authKeyLabel = resolvedDidKey
     ? "On-chain"
@@ -744,99 +732,6 @@ export function PassportDemo() {
             </div>
           </article>
 
-          <div className="overview-grid">
-            <DashboardCard
-              eyebrow="Document"
-              title="DID document"
-              icon={<FileText size={18} aria-hidden="true" />}
-              status={
-                <StatusBadge
-                  label={resolvedDidKey ? "resolved" : "waiting"}
-                  state={resolvedDidKey ? "pass" : "idle"}
-                />
-              }
-            >
-              <DataRow label="Resolved auth-1" value={resolvedDidKey || "run resolve"} mono />
-              <DataRow label="Local passkey" value={didKey || "register or paste key"} mono />
-              <DataRow label="Key match" value={keyMatchLabel} />
-              <DataRow
-                label="Round trip"
-                value={results.roundtrip.ok === true ? "matching" : "not checked"}
-              />
-            </DashboardCard>
-
-            <DashboardCard
-              eyebrow="Key material"
-              title="OmniLock wallet"
-              icon={<LockKeyhole size={18} aria-hidden="true" />}
-              status={
-                <StatusBadge
-                  label={evmAccount ? "connected" : "waiting"}
-                  state={evmAccount ? "pass" : "idle"}
-                />
-              }
-            >
-              <DataRow label="Update mode" value={config?.didUpdateInput ?? "loading"} />
-              <DataRow label="EVM account" value={evmAccount || "not connected"} mono />
-              <DataRow label="Chain ID" value={evmChainId || "not connected"} mono />
-            </DashboardCard>
-
-            <DashboardCard
-              eyebrow="Evidence"
-              title="Explorer proof"
-              icon={<Terminal size={18} aria-hidden="true" />}
-              status={
-                <StatusBadge
-                  label={explorerUrl ? "ready" : "pending"}
-                  state={explorerUrl ? "pass" : "idle"}
-                />
-              }
-            >
-              <DataRow label="Tx hash" value={displayTxHash || "pending"} mono />
-              <DataRow
-                label="Capacity"
-                value={
-                  displayCapacityShannons
-                    ? `${displayCapacityShannons} shannons`
-                    : "pending"
-                }
-                mono={Boolean(displayCapacityShannons)}
-              />
-              <DataRow
-                label="Fee paid"
-                value={
-                  displayFeePaidShannons
-                    ? `${displayFeePaidShannons} shannons`
-                    : "pending"
-                }
-                mono={Boolean(displayFeePaidShannons)}
-              />
-            </DashboardCard>
-
-            <DashboardCard
-              eyebrow="Session"
-              title="Passkey sign-in"
-              icon={<Server size={18} aria-hidden="true" />}
-              status={
-                <StatusBadge
-                  label={authenticated ? "active" : "unsigned"}
-                  state={authenticated ? "pass" : "idle"}
-                />
-              }
-            >
-              <DataRow label="Session DID" value={readString(activeSession?.did) || "none"} mono />
-              <DataRow label="Session key" value={readString(activeSession?.keyId) || "none"} mono />
-              <DataRow
-                label="Replay"
-                value={
-                  readString(results.verify.code) === "nonce_consumed"
-                    ? "rejected"
-                    : "not checked"
-                }
-              />
-            </DashboardCard>
-          </div>
-
           <section className="operations">
             <div className="section-heading">Workflow / Live Check</div>
 
@@ -919,7 +814,7 @@ export function PassportDemo() {
             <div id="update">
               <Panel
                 eyebrow="DID Update"
-                title="Write auth-1 to the DID document"
+                title="Write auth-1 on chain"
                 result={results.update}
                 actions={
                   <>
@@ -953,7 +848,7 @@ export function PassportDemo() {
               >
                 <div className="field-grid two">
                   <ValueField
-                    label="OmniLock EVM wallet"
+                    label="EVM wallet"
                     value={evmAccount}
                     onCopy={() => copyValue("evmAccount", evmAccount)}
                     copied={copied === "evmAccount"}
@@ -1087,7 +982,7 @@ export function PassportDemo() {
             </div>
             <ActivityRow
               label="Resolve"
-              detail={results.resolver.ok === true ? "DID document loaded" : "Awaiting resolve"}
+              detail={results.resolver.ok === true ? "DID loaded" : "Awaiting resolve"}
               state={resultState(results.resolver)}
             />
             <ActivityRow
@@ -1175,34 +1070,6 @@ function TrustItem({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
-  );
-}
-
-function DashboardCard({
-  eyebrow,
-  title,
-  icon,
-  status,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  icon: React.ReactNode;
-  status: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className="dashboard-card">
-      <div className="card-head compact">
-        <div className="card-title">
-          <span className="card-icon">{icon}</span>
-          <span className="eyebrow">{eyebrow}</span>
-          <h2>{title}</h2>
-        </div>
-        {status}
-      </div>
-      <div className="data-list">{children}</div>
-    </article>
   );
 }
 
