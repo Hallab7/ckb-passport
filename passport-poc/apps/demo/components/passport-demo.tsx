@@ -144,6 +144,9 @@ export function PassportDemo() {
   const hasDidInput = trimmedDid.length > 0;
   const resolverMethods = readRecord(results.resolver.verificationMethods);
   const resolvedDidKey = resolverMethods ? readString(resolverMethods[keyId]) : "";
+  const resolvedDid = readString(results.resolver.did);
+  const hasResolvedDid =
+    hasDidInput && results.resolver.ok === true && resolvedDid === trimmedDid;
   const explorerUrl = readString(results.explorer.updateTransactionUrl);
   const updateTxHash = readString(results.update.txHash);
   const evidenceTxHash = readString(results.explorer.updateTransactionHash);
@@ -210,7 +213,7 @@ export function PassportDemo() {
   const completedStepCount = steps.filter((step) => step.state === "pass").length;
   const nextAction = getNextAction({
     domainReady,
-    resolved: results.resolver.ok === true,
+    resolved: hasResolvedDid,
     didKeyReady: hasLocalDidKey,
     walletReady: Boolean(evmAccount),
     txReady: hasTxHash,
@@ -267,6 +270,9 @@ export function PassportDemo() {
   }
 
   async function registerPasskey() {
+    if (!hasResolvedDid) {
+      return;
+    }
     await run("register", async () => {
       requireWebAuthn(config, domainReady);
       const credential = (await navigator.credentials.create({
@@ -624,7 +630,7 @@ export function PassportDemo() {
               title="Register passkey"
               busy={busy === "register"}
               onClick={registerPasskey}
-              disabled={!domainReady}
+              disabled={!domainReady || !hasResolvedDid}
               variant="secondary"
             />
           </div>
@@ -814,7 +820,7 @@ export function PassportDemo() {
                     title="Register passkey"
                     busy={busy === "register"}
                     onClick={registerPasskey}
-                    disabled={!domainReady}
+                    disabled={!domainReady || !hasResolvedDid}
                   />
                 }
               >
