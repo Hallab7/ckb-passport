@@ -26,3 +26,13 @@ export type {
   PasskeyRegistrationOptions,
   PasskeyRegistrationResult,
 } from "./passkey-registration.js";
+export {
+  buildWalletProof,
+  WalletProofError,
+  walletSignatureHexToRawBytes,
+} from "./wallet-proof.js";
+export type {
+  WalletMessageSigner,
+  WalletProofEnvelope,
+  WalletProofOptions,
+} from "./wallet-proof.js";

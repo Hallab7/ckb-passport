@@ -14,6 +14,12 @@ This has been verified with `SignerCkbPrivateKey` from `@ckb-ccc/core@1.19.1`. L
 behavior for JoyID, Neuron, or injected CCC signers has not yet been confirmed in this checkpoint;
 that remains part of the browser proof-builder work.
 
+The browser wallet proof builder is implemented against a generic `signMessageRaw(message)`
+adapter. It accepts CCC-style 65-byte recoverable secp256k1 signatures or raw 64-byte signatures,
+normalizes locally created signatures to low-S, and emits a `wallet` proof envelope with no
+WebAuthn fields. This keeps wallet mode viable for local fixtures; live injected-wallet behavior
+still needs confirmation.
+
 ## Resolver Query Status
 
 The resolver wrapper decodes the `did:ckb` suffix through `@ckb-ccc/did-ckb`, builds the testnet

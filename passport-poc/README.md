@@ -111,6 +111,11 @@ PoC envelope   = base64url(raw r||s, 64 bytes)
 This is verified against `SignerCkbPrivateKey`. Browser wallet behavior still needs live
 confirmation before H2 can rely on wallet mode outside local fixtures.
 
+`@ckb-passport/siwd-browser` also exposes `buildWalletProof(options, signMessageRaw)` for wallet
+fallback experiments. The helper expects the wallet to sign the canonical message according to the
+CCC CKB secp256k1 convention, strips a recovery byte when present, normalizes the raw signature to
+low-S, and returns a `wallet` proof envelope without WebAuthn fields.
+
 ## Passkey Proof Envelope
 
 `@ckb-passport/siwd-browser` can request a WebAuthn assertion with
