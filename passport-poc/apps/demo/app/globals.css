@@ -188,7 +188,36 @@ h2 {
 }
 
 .nav-actions {
+  flex-direction: column;
+  align-items: flex-end;
   justify-content: flex-end;
+  gap: 6px;
+}
+
+.nav-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.control-status {
+  max-width: 320px;
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.25;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.control-status.pass {
+  color: var(--ink);
+}
+
+.control-status.blocked {
+  color: #8d1111;
 }
 
 .domain-alert {
@@ -1078,6 +1107,19 @@ pre {
     justify-content: flex-start;
   }
 
+  .nav-actions {
+    align-items: flex-start;
+  }
+
+  .nav-action-row {
+    justify-content: flex-start;
+  }
+
+  .control-status {
+    max-width: 100%;
+    text-align: left;
+  }
+
   .registry-hero {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -1180,6 +1222,12 @@ pre {
   .hero-ctas {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .nav-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .copy-shell {

@@ -14,7 +14,6 @@ import {
   RefreshCw,
   RotateCcw,
   Send,
-  Server,
   ShieldCheck,
   Trash2,
   Wallet,
@@ -57,6 +56,10 @@ type BusyAction =
   | "replay"
   | "session"
   | "clear";
+type ControlStatus = {
+  label: string;
+  state: "idle" | "pass" | "blocked";
+};
 
 type ProofEnvelope = {
   v: 1;
@@ -82,25 +85,11 @@ declare global {
 
 const P256_N =
   0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
+const INITIAL_KEY_ID = "auth-1";
+const INITIAL_FEE_RATE_SHANNONS_PER_KW = "1000";
 
-export function PassportDemo() {
-  const [config, setConfig] = useState<ConfigPayload | null>(null);
-  const [did, setDid] = useState("did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng");
-  const [keyId, setKeyId] = useState("auth-1");
-  const [didKey, setDidKey] = useState("");
-  const [credentialId, setCredentialId] = useState("");
-  const [evmAccount, setEvmAccount] = useState("");
-  const [evmChainId, setEvmChainId] = useState("");
-  const [feeRateShannonsPerKw, setFeeRateShannonsPerKw] = useState("1000");
-  const [feePaidShannons, setFeePaidShannons] = useState("");
-  const [txHash, setTxHash] = useState("");
-  const [capacityShannons, setCapacityShannons] = useState("");
-  const [message, setMessage] = useState("");
-  const [lastProof, setLastProof] = useState<ProofEnvelope | null>(null);
-  const [browserOrigin, setBrowserOrigin] = useState("");
-  const [busy, setBusy] = useState<BusyAction | null>(null);
-  const [copied, setCopied] = useState("");
-  const [results, setResults] = useState<Record<string, JsonRecord>>({
+function initialResults(): Record<string, JsonRecord> {
+  return {
     config: { ok: false, message: "Loading config" },
     resolver: { ok: false, message: "Not run" },
     nonce: { ok: false, message: "Not run" },
@@ -110,7 +99,33 @@ export function PassportDemo() {
     explorer: { ok: false, message: "Not run" },
     verify: { ok: false, message: "Not run" },
     session: { ok: false, message: "Not run" },
+  };
+}
+
+export function PassportDemo() {
+  const [config, setConfig] = useState<ConfigPayload | null>(null);
+  const [did, setDid] = useState("");
+  const [keyId, setKeyId] = useState(INITIAL_KEY_ID);
+  const [didKey, setDidKey] = useState("");
+  const [credentialId, setCredentialId] = useState("");
+  const [evmAccount, setEvmAccount] = useState("");
+  const [evmChainId, setEvmChainId] = useState("");
+  const [feeRateShannonsPerKw, setFeeRateShannonsPerKw] = useState(
+    INITIAL_FEE_RATE_SHANNONS_PER_KW,
+  );
+  const [feePaidShannons, setFeePaidShannons] = useState("");
+  const [txHash, setTxHash] = useState("");
+  const [capacityShannons, setCapacityShannons] = useState("");
+  const [message, setMessage] = useState("");
+  const [lastProof, setLastProof] = useState<ProofEnvelope | null>(null);
+  const [browserOrigin, setBrowserOrigin] = useState("");
+  const [busy, setBusy] = useState<BusyAction | null>(null);
+  const [copied, setCopied] = useState("");
+  const [controlStatus, setControlStatus] = useState<ControlStatus>({
+    label: "Demo ready",
+    state: "idle",
   });
+  const [results, setResults] = useState<Record<string, JsonRecord>>(initialResults);
 
   useEffect(() => {
     setBrowserOrigin(window.location.origin);
@@ -211,7 +226,6 @@ export function PassportDemo() {
       setResults((current) => ({ ...current, config: body }));
       if (body.ok) {
         setConfig(body as unknown as ConfigPayload);
-        setDid(readString(body.defaultDid) || did);
         setKeyId(readString(body.defaultKeyId) || keyId);
         setFeeRateShannonsPerKw(
           readString(body.defaultFeeRateShannonsPerKw) || feeRateShannonsPerKw,
@@ -436,10 +450,35 @@ export function PassportDemo() {
 
   async function clearCurrentSession() {
     await run("clear", async () => {
+      setControlStatus({ label: "Clearing demo", state: "idle" });
       const body = await postJson("/api/session/clear", {});
-      setResults((current) => ({ ...current, session: body }));
-      setLastProof(null);
+      resetDemoState();
+      setControlStatus({
+        label: body.ok === true
+          ? "Demo cleared"
+          : `Clear failed: ${readString(body.message) || "Unknown error"}`,
+        state: body.ok === true ? "pass" : "blocked",
+      });
     });
+  }
+
+  function resetDemoState() {
+    setDid("");
+    setKeyId(config?.defaultKeyId || INITIAL_KEY_ID);
+    setDidKey("");
+    setCredentialId("");
+    setEvmAccount("");
+    setEvmChainId("");
+    setFeeRateShannonsPerKw(
+      config?.defaultFeeRateShannonsPerKw || INITIAL_FEE_RATE_SHANNONS_PER_KW,
+    );
+    setFeePaidShannons("");
+    setTxHash("");
+    setCapacityShannons("");
+    setMessage("");
+    setLastProof(null);
+    setCopied("");
+    setResults(initialResults());
   }
 
   async function requestEvmWallet(): Promise<{ account: string; chainId: string }> {
@@ -499,6 +538,13 @@ export function PassportDemo() {
                       ? "session"
                       : "verify";
       setResults((current) => ({ ...current, [target]: body }));
+      if (action === "clear") {
+        resetDemoState();
+        setControlStatus({
+          label: `Clear failed: ${readString(body.message) || "Unknown error"}`,
+          state: "blocked",
+        });
+      }
     } finally {
       setBusy((current) => (current === action ? null : current));
     }
@@ -527,30 +573,19 @@ export function PassportDemo() {
           <a href="#trust">Trust</a>
         </nav>
         <div className="nav-actions">
-          <ActionButton
-            icon={<RefreshCw size={16} />}
-            label="Config"
-            title="Reload config"
-            busy={busy === "config"}
-            onClick={loadConfig}
-            variant="secondary"
-          />
-          <ActionButton
-            icon={<Server size={16} />}
-            label="Session"
-            title="Refresh session"
-            busy={busy === "session"}
-            onClick={refreshSession}
-            variant="secondary"
-          />
-          <ActionButton
-            icon={<Trash2 size={16} />}
-            label="Clear"
-            title="Clear session"
-            busy={busy === "clear"}
-            onClick={clearCurrentSession}
-            variant="danger"
-          />
+          <div className="nav-action-row">
+            <ActionButton
+              icon={<Trash2 size={16} />}
+              label="Clear"
+              title="Clear session"
+              busy={busy === "clear"}
+              onClick={clearCurrentSession}
+              variant="danger"
+            />
+          </div>
+          <span className={`control-status ${controlStatus.state}`} aria-live="polite">
+            {controlStatus.label}
+          </span>
         </div>
       </header>
 
@@ -574,8 +609,8 @@ export function PassportDemo() {
             <span>wallet sign-in.</span>
           </h1>
           <p className="hero-description">
-            Resolve the live DID, publish auth-1, and verify the passkey session
-            from one browser console.
+            Paste a DID, publish auth-1, and verify the passkey session from
+            one browser console.
           </p>
           <div className="hero-ctas">
             <ActionButton
@@ -751,8 +786,19 @@ export function PassportDemo() {
                 }
               >
                 <div className="field-grid two">
-                  <TextField label="DID" value={did} onChange={setDid} mono />
-                  <TextField label="Key ID" value={keyId} onChange={setKeyId} mono />
+                  <TextField
+                    label="DID"
+                    value={did}
+                    onChange={setDid}
+                    placeholder="did:ckb..."
+                    mono
+                  />
+                  <ValueField
+                    label="Key ID"
+                    value={keyId}
+                    onCopy={() => copyValue("keyId", keyId)}
+                    copied={copied === "keyId"}
+                  />
                 </div>
               </Panel>
             </div>
@@ -1138,11 +1184,13 @@ function TextField({
   label,
   value,
   onChange,
+  placeholder,
   mono,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   mono?: boolean;
 }) {
   return (
@@ -1152,6 +1200,7 @@ function TextField({
         className={mono ? "mono" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         spellCheck={false}
         autoComplete="off"
       />

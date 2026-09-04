@@ -20,7 +20,7 @@ import {
 import { NextResponse, type NextRequest } from "next/server";
 
 export const SESSION_COOKIE = "ckb_passport_session";
-export const DEFAULT_DID = "did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng";
+export const DEFAULT_DID = "";
 export const DEFAULT_KEY_ID = "auth-1";
 export const DEFAULT_FEE_RATE_SHANNONS_PER_KW = "1000";
 
