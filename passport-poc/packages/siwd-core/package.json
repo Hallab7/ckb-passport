@@ -5,11 +5,10 @@
   "type": "module",
   "description": "Core SIWD message and encoding utilities.",
   "scripts": {
-    "build": "node scripts/scaffold-ok.mjs",
-    "test": "node scripts/scaffold-ok.mjs"
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
   },
   "exports": {
     ".": "./dist/index.js"
   }
 }
-
