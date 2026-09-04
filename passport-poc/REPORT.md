@@ -45,3 +45,13 @@ the passkey as the DID cell lock and does not introduce a login transaction.
 Live submission is available through `npm run update:did` after `npm run build`, but this checkout
 does not contain a testnet DID, passkey `did:key`, or DID lock private key. Until those are supplied,
 the transaction hash and capacity evidence remain unrecorded.
+
+## DID Re-Resolve Round Trip Status
+
+The re-resolve checker loads the DID from CKB testnet through the same duplicate-safe resolver,
+decodes the DID document, reads `verificationMethods["auth-1"]`, and compares it byte-for-byte to
+the expected passkey `did:key`. Local tests cover the matching case, missing key, mismatched key,
+and zero-live-cell failure.
+
+The live round trip has not been executed in this checkout because it requires the DID update
+transaction from the previous step to be submitted and confirmed first.

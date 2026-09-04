@@ -17,6 +17,11 @@ export type {
 } from "./nonce.js";
 export { buildDidTypeScript, resolveDidCell } from "./resolver.js";
 export type { DidCellResolution, ResolveDidCellOptions } from "./resolver.js";
+export { checkDidVerificationMethodRoundTrip } from "./round-trip.js";
+export type {
+  CheckDidVerificationMethodRoundTripOptions,
+  DidVerificationMethodRoundTrip,
+} from "./round-trip.js";
 export {
   decodeDidDocumentFromCell,
   validateDidCkbDocument,

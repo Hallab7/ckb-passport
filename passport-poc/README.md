@@ -19,12 +19,16 @@ The live DID update gate is opt-in:
 ```powershell
 npm run build
 npm run update:did
+npm run check:roundtrip
 ```
 
 It requires `CKB_PASSPORT_LIVE_DID`, `CKB_PASSPORT_AUTH_DID_KEY`, and
 `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY`. The update writes the passkey P-256 `did:key` into
 `verificationMethods["auth-1"]` by signing with the DID cell lock key. The passkey is not used as
 the DID cell lock, and login does not submit a transaction.
+
+After the update transaction is confirmed, `npm run check:roundtrip` re-resolves the DID and checks
+that `verificationMethods["auth-1"]` equals `CKB_PASSPORT_AUTH_DID_KEY` byte-for-byte.
 
 ## Scope
 
