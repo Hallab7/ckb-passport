@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Guided Next.js relying-party demo for Passport PoC.",
   "scripts": {
+    "prebuild": "npm run build -w @ckb-passport/siwd-core && npm run build -w @ckb-passport/siwd-browser && npm run build -w @ckb-passport/siwd-verify",
     "build": "next build",
     "dev": "next dev --hostname localhost",
     "test": "vitest run"
