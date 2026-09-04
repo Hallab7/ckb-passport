@@ -78,6 +78,9 @@ The page runs the live demo in order:
 Do not enter the DID lock private key into a deployed or third-party server. The demo is intended to
 run locally on `localhost`.
 
+The supplied DID currently resolves with an empty verification method set. That is expected for a
+fresh DID and the demo can still add `auth-1`.
+
 ## Environment
 
 Defaults:

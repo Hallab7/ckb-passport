@@ -76,7 +76,12 @@ export function validateDidCkbDocument(
     }
   }
 
-  if (!isRecord(document.verificationMethods)) {
+  const verificationMethods =
+    document.verificationMethods === undefined
+      ? {}
+      : document.verificationMethods;
+
+  if (!isRecord(verificationMethods)) {
     return {
       ok: false,
       code: "did_document_invalid",
@@ -84,7 +89,7 @@ export function validateDidCkbDocument(
     };
   }
 
-  for (const [key, value] of Object.entries(document.verificationMethods)) {
+  for (const [key, value] of Object.entries(verificationMethods)) {
     if (key.length === 0 || typeof value !== "string") {
       return {
         ok: false,
@@ -116,18 +121,18 @@ export function validateDidCkbDocument(
     };
   }
 
-  const verificationMethods = document.verificationMethods as Record<string, string>;
   const alsoKnownAs = document.alsoKnownAs as string[] | undefined;
   const services = document.services as Record<string, unknown> | undefined;
+  const normalizedDocument = {
+    verificationMethods: verificationMethods as Record<string, string>,
+    ...(alsoKnownAs ? { alsoKnownAs } : {}),
+    ...(services ? { services } : {}),
+  };
 
   return {
     ok: true,
-    document: {
-      verificationMethods,
-      ...(alsoKnownAs ? { alsoKnownAs } : {}),
-      ...(services ? { services } : {}),
-    },
-    data: data ?? DidCkbData.fromV1({ document }),
+    document: normalizedDocument,
+    data: data ?? DidCkbData.fromV1({ document: normalizedDocument }),
   };
 }
 

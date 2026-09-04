@@ -74,6 +74,26 @@ describe("upsertP256VerificationMethod", () => {
     });
   });
 
+  it("adds auth-1 to a DID document that has no verification methods yet", () => {
+    const result = upsertP256VerificationMethod(
+      {
+        alsoKnownAs: ["at://empty-methods.test"],
+      },
+      didKey,
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      previousDidKey: undefined,
+      document: {
+        verificationMethods: {
+          "auth-1": didKey,
+        },
+        alsoKnownAs: ["at://empty-methods.test"],
+      },
+    });
+  });
+
   it("rejects non-P-256 did:key values for passkey registration", () => {
     expect(
       upsertP256VerificationMethod({ verificationMethods: {} }, secpDidKey),

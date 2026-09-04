@@ -38,6 +38,10 @@ npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts
 That run resolved the supplied DID from live testnet cells, so H1 now has current read-only live DID
 evidence in this checkout.
 
+The supplied DID currently decodes with no `verificationMethods` field. The verifier now normalizes
+that shape to an empty method set so the demo can add the first `auth-1` passkey method instead of
+failing before the update path.
+
 ## H2 - Verification Method Signature
 
 H2 is implemented for both supported verification method curves. Wallet mode verifies secp256k1
@@ -106,7 +110,8 @@ npm run evidence:check pass
 ## Capacity And Explorer Evidence
 
 No capacity number is recorded because no live DID update transaction has been submitted in this
-checkout. The testnet DID is now available, but `npm run evidence:explorer` still requires
+checkout. The resolved DID cell currently reports `55600000000` shannons before any Passport
+update. The testnet DID is now available, but `npm run evidence:explorer` still requires
 `CKB_PASSPORT_AUTH_DID_KEY`, `CKB_PASSPORT_UPDATE_TX_HASH`, and optional
 `CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` before it can print a Pudge testnet explorer transaction
 URL. Until those values exist, `EXPLORER-EVIDENCE.md` remains marked as not captured.

@@ -25,6 +25,23 @@ describe("decodeDidDocumentFromCell", () => {
     });
   });
 
+  it("decodes a live-style DID document with no verification methods yet", () => {
+    const document = {
+      alsoKnownAs: ["at://empty-methods.test"],
+    };
+    const cell = fakeCell(
+      DidCkbData.encode(DidCkbData.fromV1({ document })),
+    );
+
+    expect(decodeDidDocumentFromCell(cell)).toMatchObject({
+      ok: true,
+      document: {
+        verificationMethods: {},
+        alsoKnownAs: ["at://empty-methods.test"],
+      },
+    });
+  });
+
   it("fails closed when cell data is missing", () => {
     expect(decodeDidDocumentFromCell({} as ccc.Cell)).toEqual({
       ok: false,
@@ -55,6 +72,20 @@ describe("validateDidCkbDocument", () => {
         verificationMethods: {
           "auth-1": "did:key:zDnaeWhtsampleplaceholder",
         },
+      },
+    });
+  });
+
+  it("treats missing verificationMethods as an empty method set", () => {
+    expect(
+      validateDidCkbDocument({
+        alsoKnownAs: ["at://empty-methods.test"],
+      }),
+    ).toMatchObject({
+      ok: true,
+      document: {
+        verificationMethods: {},
+        alsoKnownAs: ["at://empty-methods.test"],
       },
     });
   });
@@ -112,4 +143,3 @@ describe("validateDidCkbDocument", () => {
 function fakeCell(outputData: ccc.BytesLike): ccc.Cell {
   return { outputData } as unknown as ccc.Cell;
 }
-
