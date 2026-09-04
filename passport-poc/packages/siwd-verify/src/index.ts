@@ -32,6 +32,19 @@ export type {
   WalletSiwdProofEnvelope,
   WebAuthnSiwdProofEnvelope,
 } from "./proof.js";
+export { evaluateSiwdVector } from "./vector-runner.js";
+export type {
+  SiwdTestVector,
+  SiwdVectorEvaluation,
+  SiwdVectorExpectation,
+  SiwdVectorNonceState,
+} from "./vector-runner.js";
+export { verifySiwdProof } from "./verification.js";
+export type {
+  VerifySiwdProofFailureCode,
+  VerifySiwdProofOptions,
+  VerifySiwdProofResult,
+} from "./verification.js";
 export { generateSessionToken, InMemorySessionService } from "./session.js";
 export type {
   IssuedPassportSession,

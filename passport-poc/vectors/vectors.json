@@ -1,0 +1,55 @@
+[
+  {
+    "name": "wallet-positive-local-fixture",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "wallet",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Wallet123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "wallet",
+      "signature": "97_upFHQtn7vNwShjKR6Y6gTzHT40tA3urg_lsEsQO83UHGvKbnKhhs0c1A3u8Ret7N3esfYVnMUewTeUjMCRA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "pass",
+    "reason": "local CCC secp256k1 wallet fixture verifies against the DID document key",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+        }
+      }
+    }
+  },
+  {
+    "name": "webauthn-positive-local-fixture",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Passkey123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "webauthn",
+      "signature": "YcTWoOzoGl8VrW4_Fk5y6z2LUisvUFrIb34_INTZqlQSiqfpsYO5lIUQGTnTZ1-SwOVUopg1OsnV5G4nMGmxdA",
+      "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiUkpoWXA1LWhycGRScE16a3NzYmdIV1dvcG9QMWhNTUNkckhVOHNnUG9lWSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9",
+      "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "pass",
+    "reason": "local WebAuthn P-256 fixture verifies against the DID document key",
+    "rpId": "localhost",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 1,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
+        }
+      }
+    }
+  }
+]

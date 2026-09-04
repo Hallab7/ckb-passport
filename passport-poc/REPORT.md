@@ -106,3 +106,9 @@ hash, wrong curve, tampered client data, tampered authenticator data, and high-S
 The verifier package now includes an in-memory demo session service. A successful verification can
 issue a random token whose server-side session stores only DID, key ID, issued time, and expiration
 time. Tests verify expiry, clearing, token format, and the absence of address or lock-script fields.
+
+## Test Vector Status
+
+The PoC now has a `vectors/vectors.json` artifact and vector runner. The initial vectors include a
+positive local wallet fixture and a positive local WebAuthn fixture, each with a deterministic DID
+document resolver fixture and issued nonce state. Negative vectors are added in the next checkpoint.

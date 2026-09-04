@@ -136,3 +136,9 @@ low-S, and returns a `wallet` proof envelope without WebAuthn fields.
 
 WebAuthn DER ECDSA signatures are converted to raw `r||s` and normalized to low-S before the proof
 is returned. The proof envelope does not include a wallet address, lock script, or transaction.
+
+## Test Vectors
+
+`vectors/vectors.json` contains reusable proof vectors. Each vector includes a proof envelope,
+expected origin, network, expected outcome, human-readable reason, nonce state, and a deterministic
+resolver fixture. `npm test` runs the vector runner against every vector.
