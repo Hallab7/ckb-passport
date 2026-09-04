@@ -14,6 +14,18 @@ npm run audit:scaffold
 npm run probe:sdk
 ```
 
+The live DID update gate is opt-in:
+
+```powershell
+npm run build
+npm run update:did
+```
+
+It requires `CKB_PASSPORT_LIVE_DID`, `CKB_PASSPORT_AUTH_DID_KEY`, and
+`CKB_PASSPORT_DID_LOCK_PRIVATE_KEY`. The update writes the passkey P-256 `did:key` into
+`verificationMethods["auth-1"]` by signing with the DID cell lock key. The passkey is not used as
+the DID cell lock, and login does not submit a transaction.
+
 ## Scope
 
 - CKB testnet only.
@@ -72,6 +84,15 @@ CKB_DID_HASH_TYPE=type
 ```
 
 Mainnet runtime config is rejected in this PoC package to preserve the testnet-only scope.
+
+Live update variables:
+
+| Setting | Purpose |
+|---|---|
+| `CKB_PASSPORT_LIVE_DID` | Testnet `did:ckb` to update. |
+| `CKB_PASSPORT_AUTH_KEY_ID` | Verification method key to write; defaults to `auth-1`. |
+| `CKB_PASSPORT_AUTH_DID_KEY` | P-256 passkey `did:key:zDna...` to store. |
+| `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY` | Testnet private key controlling the current DID cell lock. |
 
 ## Wallet Fallback Status
 

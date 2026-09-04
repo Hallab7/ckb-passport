@@ -22,6 +22,20 @@ export {
   validateDidCkbDocument,
 } from "./document.js";
 export type { DidCkbDocument, DidDocumentDecodeResult } from "./document.js";
+export {
+  prepareDidVerificationMethodUpdate,
+  submitDidVerificationMethodUpdate,
+  upsertP256VerificationMethod,
+} from "./did-update.js";
+export type {
+  DidTransferFunction,
+  DidVerificationMethodUpdateFailureCode,
+  DidVerificationMethodUpdateResult,
+  PreparedDidVerificationMethodUpdate,
+  PrepareDidVerificationMethodUpdateOptions,
+  SubmittedDidVerificationMethodUpdate,
+  SubmitDidVerificationMethodUpdateOptions,
+} from "./did-update.js";
 export { selectVerificationMethod } from "./verification-method.js";
 export type { VerificationMethodSelection } from "./verification-method.js";
 export {

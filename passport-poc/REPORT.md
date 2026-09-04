@@ -34,3 +34,14 @@ verification-method selection: `verificationMethods` must be an object with stri
 `alsoKnownAs` must be an array of strings when present, and `services` must be an object when
 present. DID documents containing `type`, `rotationKeys`, `prev`, or `sig` fail closed.
 
+## DID Update Gate Status
+
+The update gate now prepares a `transferDidCkb` transaction that adds or replaces
+`verificationMethods["auth-1"]` with a generated P-256 `did:key:zDna...`. The wrapper first
+resolves the DID with the PoC duplicate-cell guard, keeps the current DID cell lock as the receiver,
+and signs only through a caller-provided DID lock signer. This confirms the code path does not use
+the passkey as the DID cell lock and does not introduce a login transaction.
+
+Live submission is available through `npm run update:did` after `npm run build`, but this checkout
+does not contain a testnet DID, passkey `did:key`, or DID lock private key. Until those are supplied,
+the transaction hash and capacity evidence remain unrecorded.

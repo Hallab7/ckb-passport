@@ -13,6 +13,7 @@
     "build": "node scripts/build-workspaces.mjs",
     "probe:sdk": "node scripts/probe-did-sdk.mjs",
     "test": "node scripts/test-workspaces.mjs",
+    "update:did": "node scripts/update-did-method.mjs",
     "demo": "npm run dev -w @ckb-passport/demo"
   },
   "engines": {
