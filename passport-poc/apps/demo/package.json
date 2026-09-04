@@ -14,6 +14,7 @@
     "@ckb-passport/siwd-browser": "^0.0.0",
     "@ckb-passport/siwd-core": "^0.0.0",
     "@ckb-passport/siwd-verify": "^0.0.0",
+    "ethers": "^6.17.0",
     "lucide-react": "^1.41.0",
     "next": "^16.3.4",
     "react": "^19.2.8",

@@ -1,5 +1,5 @@
-import { ccc } from "@ckb-ccc/core";
 import { submitDidVerificationMethodUpdate } from "@ckb-passport/siwd-verify";
+import { createDidLockSignerFromPrivateKey } from "./did-lock-signer";
 import {
   ApiError,
   DEFAULT_FEE_RATE_SHANNONS_PER_KW,
@@ -28,16 +28,27 @@ export async function submitDidUpdateFromUi(
       body: {
         ok: false,
         code: "missing_did_lock_private_key",
-        message: "DID update requires the DID cell lock private key",
+        message: "DID update requires the DID controller private key",
       },
     };
   }
 
   const { client } = await getRuntime();
-  const signer = new ccc.SignerCkbPrivateKey(client, didLockPrivateKey);
+  const signer = await createDidLockSignerFromPrivateKey({
+    client,
+    did,
+    privateKey: didLockPrivateKey,
+  });
+  if (!signer.ok) {
+    return {
+      status: 400,
+      body: signer,
+    };
+  }
+
   const result = await submitDidVerificationMethodUpdate({
     client,
-    signer,
+    signer: signer.signer,
     did,
     keyId,
     didKey,
@@ -62,6 +73,7 @@ export async function submitDidUpdateFromUi(
       capacityShannons: result.capacityShannons,
       feeRateShannonsPerKw: result.feeRateShannonsPerKw,
       feePaidShannons: result.feePaidShannons,
+      signerKind: signer.kind,
       explorerUrl: `${PUDGE_EXPLORER_BASE_URL}/transaction/${result.txHash}`,
     },
   };

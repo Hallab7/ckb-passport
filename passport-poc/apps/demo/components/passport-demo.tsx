@@ -560,7 +560,7 @@ export function PassportDemo() {
           >
             <div className="field-grid two">
               <SecretField
-                label="DID lock private key"
+                label="DID controller private key"
                 value={didLockPrivateKey}
                 onChange={setDidLockPrivateKey}
               />

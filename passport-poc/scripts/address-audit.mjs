@@ -19,6 +19,7 @@ const loginFiles = [
 const registrationUpdateFiles = [
   "apps/demo/src/live-update.ts",
   "apps/demo/app/api/did/update/route.ts",
+  "apps/demo/lib/did-lock-signer.ts",
   "apps/demo/lib/did-update-runtime.ts",
   "apps/demo/components/passport-demo.tsx",
   "packages/siwd-verify/src/did-update.ts",
@@ -38,7 +39,7 @@ const forbiddenLoginPatterns = [
 const registrationUpdatePatterns = [
   { code: "did_update_endpoint", pattern: /\/api\/did\/update/ },
   { code: "update_gate", pattern: /CKB_PASSPORT_ENABLE_DID_UPDATE/ },
-  { code: "did_lock_signer", pattern: /CKB_PASSPORT_DID_LOCK_PRIVATE_KEY|SignerCkbPrivateKey/ },
+  { code: "did_lock_signer", pattern: /CKB_PASSPORT_DID_LOCK_PRIVATE_KEY|SignerCkbPrivateKey|EvmPrivateKeySigner/ },
   { code: "transaction_submission", pattern: /\b(sendTransaction|submitDidVerificationMethodUpdate)\b/ },
 ];
 

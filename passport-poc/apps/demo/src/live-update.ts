@@ -1,5 +1,6 @@
 import { ccc } from "@ckb-ccc/core";
 import { submitDidVerificationMethodUpdate } from "@ckb-passport/siwd-verify";
+import { createDidLockSignerFromPrivateKey } from "../lib/did-lock-signer";
 
 export type DidUpdateRouteOptions = {
   body: unknown;
@@ -41,18 +42,26 @@ export async function handleDidUpdateRequest(
       body: {
         ok: false,
         code: "missing_live_update_env",
-        message: "live DID update requires CKB_PASSPORT_DID_LOCK_PRIVATE_KEY",
+        message: "live DID update requires the DID controller private key",
       },
     };
   }
 
-  const signer = new ccc.SignerCkbPrivateKey(
-    options.client,
-    options.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY,
-  );
+  const signer = await createDidLockSignerFromPrivateKey({
+    client: options.client,
+    did,
+    privateKey: options.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY,
+  });
+  if (!signer.ok) {
+    return {
+      status: 400,
+      body: signer,
+    };
+  }
+
   const result = await submitDidVerificationMethodUpdate({
     client: options.client,
-    signer,
+    signer: signer.signer,
     did,
     keyId,
     didKey,
@@ -77,6 +86,7 @@ export async function handleDidUpdateRequest(
       capacityShannons: result.capacityShannons,
       feeRateShannonsPerKw: result.feeRateShannonsPerKw,
       feePaidShannons: result.feePaidShannons,
+      signerKind: signer.kind,
       note: "passkey did:key was written with the DID cell lock signer",
     },
   };
