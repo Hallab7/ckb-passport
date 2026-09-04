@@ -1,14 +1,21 @@
 import { createReadStream } from "node:fs";
-import { access, readFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { extname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { ccc } from "@ckb-ccc/core";
-import { buildSiwdMessage, type SiwdMessageFields } from "@ckb-passport/siwd-core";
+import { passkeyAttestationToDidKey } from "@ckb-passport/siwd-browser";
+import {
+  base64UrlDecode,
+  buildSiwdMessage,
+  bytesToHex,
+  type SiwdMessageFields,
+} from "@ckb-passport/siwd-core";
 import {
   InMemoryNonceService,
   InMemorySessionService,
   loadPassportPocConfig,
+  submitDidVerificationMethodUpdate,
   verifySiwdProof,
   type PassportPocConfig,
   type PassportSession,
@@ -31,6 +38,7 @@ export type DemoServerOptions = {
   sessionService?: InMemorySessionService;
   verifyProof?: DemoProofVerifier;
   publicDir?: string;
+  env?: Record<string, string | undefined>;
 };
 
 const SESSION_COOKIE = "ckb_passport_session";
@@ -43,13 +51,14 @@ export function createDemoServer(options: DemoServerOptions): Server {
   const sessionService = options.sessionService ?? new InMemorySessionService();
   const verifyProof = options.verifyProof ?? verifySiwdProof;
   const publicDir = options.publicDir ?? PUBLIC_DIR;
+  const env = options.env ?? process.env;
 
   return createServer(async (request, response) => {
     try {
       const url = requestUrl(request, options.config.expectedOrigin);
 
       if (request.method === "GET" && url.pathname === "/api/config") {
-        return sendJson(response, 200, configPayload(options.config));
+        return sendJson(response, 200, configPayload(options.config, env));
       }
 
       if (request.method === "GET" && url.pathname === "/api/nonce") {
@@ -101,6 +110,76 @@ export function createDemoServer(options: DemoServerOptions): Server {
           keyId: result.keyId,
           mode: result.mode,
           session: serializeSession(issued.session),
+        });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/passkey/did-key") {
+        const body = await readJson(request);
+        const attestationObject = readRequiredString(body, "attestationObject");
+        try {
+          const result = passkeyAttestationToDidKey(base64UrlDecode(attestationObject));
+          return sendJson(response, 200, {
+            ok: true,
+            didKey: result.didKey,
+            compressedPublicKey: bytesToHex(result.compressedPublicKey),
+          });
+        } catch (error) {
+          return sendJson(response, 400, {
+            ok: false,
+            code: "passkey_attestation_invalid",
+            message:
+              error instanceof Error
+                ? error.message
+                : "passkey attestation could not be decoded",
+          });
+        }
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/did/update") {
+        const body = await readJson(request);
+        const did = readRequiredString(body, "did");
+        const keyId = readRequiredString(body, "keyId");
+        const didKey = readRequiredString(body, "didKey");
+
+        if (env.CKB_PASSPORT_ENABLE_DID_UPDATE !== "1") {
+          return sendJson(response, 400, {
+            ok: false,
+            code: "did_update_disabled",
+            message: "live DID update is disabled for this demo server",
+          });
+        }
+        if (!env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY) {
+          return sendJson(response, 400, {
+            ok: false,
+            code: "missing_live_update_env",
+            message: "live DID update requires CKB_PASSPORT_DID_LOCK_PRIVATE_KEY",
+          });
+        }
+
+        const signer = new ccc.SignerCkbPrivateKey(
+          options.client,
+          env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY,
+        );
+        const result = await submitDidVerificationMethodUpdate({
+          client: options.client,
+          signer,
+          did,
+          keyId,
+          didKey,
+        });
+
+        if (!result.ok) {
+          return sendJson(response, 400, result);
+        }
+
+        return sendJson(response, 200, {
+          ok: true,
+          did: result.did,
+          keyId: result.keyId,
+          didKey: result.didKey,
+          txHash: result.txHash,
+          capacityShannons: result.capacityShannons,
+          note: "passkey did:key was written with the DID cell lock signer",
         });
       }
 
@@ -178,7 +257,7 @@ async function servePublic(
   requestPath: string,
 ): Promise<void> {
   const decodedPath = decodeURIComponent(requestPath);
-  const pathName = decodedPath === "/" ? "/index.html" : decodedPath;
+  const pathName = decodedPath === "/" ? "index.html" : decodedPath.replace(/^\/+/, "");
   const filePath = join(publicDir, pathName);
   const relativePath = relative(publicDir, filePath);
   if (relativePath.startsWith("..") || relativePath === "") {
@@ -250,7 +329,10 @@ function sendJson(
   response.end(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-function configPayload(config: PassportPocConfig): Record<string, unknown> {
+function configPayload(
+  config: PassportPocConfig,
+  env: Record<string, string | undefined>,
+): Record<string, unknown> {
   return {
     ok: true,
     network: config.network,
@@ -258,7 +340,16 @@ function configPayload(config: PassportPocConfig): Record<string, unknown> {
     rpId: new URL(config.expectedOrigin).hostname,
     didCodeHash: config.didCodeHash,
     didHashType: config.didHashType,
+    didUpdateEnabled: env.CKB_PASSPORT_ENABLE_DID_UPDATE === "1",
+    hasDidLockSigner: Boolean(env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY),
   };
+}
+
+function readRequiredString(body: unknown, field: string): string {
+  if (!isRecord(body) || typeof body[field] !== "string" || body[field].length === 0) {
+    throw new HttpError(400, "request_field_invalid", `${field} must be a non-empty string`);
+  }
+  return body[field];
 }
 
 function serializeSession(session: PassportSession): Record<string, string> {

@@ -32,9 +32,16 @@ describe("demo server", () => {
 
   it("issues a nonce and canonical message for the configured testnet origin", async () => {
     const { baseUrl } = await startServer();
+    const configResponse = await fetch(`${baseUrl}/api/config`);
+    const configBody = await configResponse.json();
     const response = await fetch(`${baseUrl}/api/nonce?did=${did}&keyId=${keyId}`);
     const body = await response.json();
 
+    expect(configBody).toMatchObject({
+      ok: true,
+      didUpdateEnabled: false,
+      hasDidLockSigner: false,
+    });
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
       ok: true,
@@ -46,6 +53,23 @@ describe("demo server", () => {
     expect(body.message).toContain(`${new URL(config.expectedOrigin).host} wants you to sign in`);
     expect(body.message).toContain(`DID:\n${did}`);
     expect(JSON.stringify(body)).not.toContain("address");
+  });
+
+  it("serves the browser demo page and assets", async () => {
+    const { baseUrl } = await startServer();
+    const pageResponse = await fetch(`${baseUrl}/`);
+    const page = await pageResponse.text();
+    const scriptResponse = await fetch(`${baseUrl}/app.js`);
+    const script = await scriptResponse.text();
+
+    expect(pageResponse.headers.get("content-type")).toContain("text/html");
+    expect(page).toContain("id=\"didInput\"");
+    expect(page).toContain("id=\"replayButton\"");
+    expect(page).toContain("id=\"sessionOutput\"");
+    expect(scriptResponse.headers.get("content-type")).toContain("text/javascript");
+    expect(script).toContain("/api/nonce");
+    expect(script).toContain("/api/verify");
+    expect(script).not.toContain("localStorage");
   });
 
   it("returns named verification failures without creating a session", async () => {
@@ -147,6 +171,42 @@ describe("demo server", () => {
       session: null,
     });
   });
+
+  it("keeps DID update disabled unless the server opts in", async () => {
+    const { baseUrl } = await startServer();
+    const response = await fetch(`${baseUrl}/api/did/update`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        did,
+        keyId,
+        didKey: "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF",
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      ok: false,
+      code: "did_update_disabled",
+    });
+  });
+
+  it("returns a named error for malformed passkey attestation input", async () => {
+    const { baseUrl } = await startServer();
+    const response = await fetch(`${baseUrl}/api/passkey/did-key`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ attestationObject: "AA" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      ok: false,
+      code: "passkey_attestation_invalid",
+    });
+  });
 });
 
 async function startServer(options: { verifyProof?: DemoProofVerifier } = {}): Promise<{
@@ -156,6 +216,7 @@ async function startServer(options: { verifyProof?: DemoProofVerifier } = {}): P
     config,
     client: {} as ccc.Client,
     verifyProof: options.verifyProof ?? okVerifier,
+    env: {},
   });
   servers.push(server);
   await new Promise<void>((resolve) => {
