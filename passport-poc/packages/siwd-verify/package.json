@@ -16,5 +16,9 @@
     "@ckb-ccc/did-ckb": "^0.2.9",
     "@ckb-passport/siwd-core": "^0.0.0",
     "@noble/curves": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
   }
 }

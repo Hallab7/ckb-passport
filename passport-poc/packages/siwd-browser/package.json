@@ -14,5 +14,9 @@
   "dependencies": {
     "@ckb-passport/siwd-core": "^0.0.0",
     "cborg": "^4.5.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
   }
 }
