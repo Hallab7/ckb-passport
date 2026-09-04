@@ -2,9 +2,11 @@
 
 Date: 2026-09-04
 
-Status: local PoC implementation is complete and audited. The live testnet drill, explorer proof,
-and recording are not complete in this checkout because no live DID, passkey `did:key`, DID lock
-private key, update transaction hash, or captured proof file is configured.
+Status: local PoC implementation is complete and audited. The supplied testnet DID
+`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` resolves through the live resolver test. The live
+testnet drill, explorer proof, and recording are not complete in this checkout because no passkey
+`did:key`, DID lock private key, update transaction hash, captured proof file, or captured
+recording file is configured.
 
 ## H3 - Passkey Registration And DID Update
 
@@ -12,10 +14,10 @@ H3 is not passed yet because the live gate has not been executed. The implementa
 browser passkey, parse its attestation object, require COSE ES256/P-256, compress the public key,
 encode `did:key:zDna...`, prepare a `transferDidCkb` DID update, submit it through a DID cell lock
 signer, and re-resolve `verificationMethods["auth-1"]` byte-for-byte. Local unit tests cover the
-COSE conversion, DID update transformation, and round-trip checker. The missing evidence is live:
-`CKB_PASSPORT_LIVE_DID`, `CKB_PASSPORT_AUTH_DID_KEY`, `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY`, and a
-confirmed update transaction. Until that is supplied and confirmed, H3 remains unresolved rather
-than proven.
+COSE conversion, DID update transformation, and round-trip checker. The supplied live DID is
+available for the gate, but the missing H3 evidence is still live: `CKB_PASSPORT_AUTH_DID_KEY`,
+`CKB_PASSPORT_DID_LOCK_PRIVATE_KEY`, and a confirmed update transaction. Until those are supplied
+and confirmed, H3 remains unresolved rather than proven.
 
 ## H1 - DID Resolution
 
@@ -24,9 +26,16 @@ through `@ckb-ccc/did-ckb`, builds the testnet DID type script from
 `ccc.ClientPublicTestnet.getKnownScript(ccc.KnownScript.DidCkb)`, and queries live cells directly.
 Zero live cells fail as nonexistent or deactivated. Multiple live cells fail closed instead of
 choosing arbitrarily. Local resolver tests cover successful resolution, zero live cells, duplicate
-live cells, and malformed DID input. A live resolver test exists, but it is skipped until
-`CKB_PASSPORT_LIVE_DID` is set, so H1 has implementation evidence but no current live DID evidence
-in this checkout.
+live cells, and malformed DID input. With
+`CKB_PASSPORT_LIVE_DID=did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng`, the targeted live resolver test
+passed on 2026-09-04:
+
+```text
+npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts
+```
+
+That run resolved the supplied DID from live testnet cells, so H1 now has current read-only live DID
+evidence in this checkout.
 
 ## H2 - Verification Method Signature
 
@@ -86,6 +95,7 @@ Latest local audit for this report:
 npm run build        pass
 npm test             pass
 npm run probe:sdk    pass
+npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts pass
 npm run audit:h4     pass
 npm run drill:check  pass
 npm run evidence:check pass
@@ -94,10 +104,10 @@ npm run evidence:check pass
 ## Capacity And Explorer Evidence
 
 No capacity number is recorded because no live DID update transaction has been submitted in this
-checkout. `npm run evidence:explorer` validates `CKB_PASSPORT_LIVE_DID`,
+checkout. The testnet DID is now available, but `npm run evidence:explorer` still requires
 `CKB_PASSPORT_AUTH_DID_KEY`, `CKB_PASSPORT_UPDATE_TX_HASH`, and optional
-`CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS`, then prints a Pudge testnet explorer transaction URL.
-Until those values exist, `EXPLORER-EVIDENCE.md` remains marked as not captured.
+`CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` before it can print a Pudge testnet explorer transaction
+URL. Until those values exist, `EXPLORER-EVIDENCE.md` remains marked as not captured.
 
 ## Recording Evidence
 
@@ -121,6 +131,6 @@ documented here.
 
 `ACCEPTANCE.md` and `npm run acceptance:verify` track the original acceptance criteria. Local
 criteria pass: one-command startup is documented, vectors run under `npm test`, replay rejection is
-covered, H4 source/session audit passes, and this report states H1 through H4. Live criteria remain
-incomplete until a real testnet DID update, explorer transaction, platform-authenticator sign-in,
-and recording are captured.
+covered, H1 has read-only live DID resolution evidence, H4 source/session audit passes, and this
+report states H1 through H4. Live criteria remain incomplete until a real testnet DID update,
+explorer transaction, platform-authenticator sign-in, and recording are captured.

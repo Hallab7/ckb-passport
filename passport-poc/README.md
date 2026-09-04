@@ -47,7 +47,8 @@ npm run acceptance:check
 ```
 
 `npm test` runs every package test, including `vectors/vectors.json`. The live resolver test is
-skipped unless `CKB_PASSPORT_LIVE_DID` is set.
+skipped unless `CKB_PASSPORT_LIVE_DID` is set. In this checkout,
+`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` has passed the targeted live resolver test.
 
 ## Run The Demo
 
@@ -206,8 +207,8 @@ Set `CKB_PASSPORT_RECORDING` to override the default `evidence/passport-poc-reco
 npm run acceptance:verify
 ```
 
-In this checkout it reports `live_acceptance_incomplete` because live DID update, explorer, and
-recording evidence are not present.
+In this checkout it reports `live_acceptance_incomplete` because live DID update, explorer,
+platform-authenticator sign-in, and recording evidence are not present.
 
 ## Vectors
 
@@ -218,8 +219,8 @@ challenge mismatch, User Present clear, and zero live DID cells.
 
 ## Current Limitations
 
-- No live DID, passkey `did:key`, update transaction hash, or proof recording is present in this
-  checkout.
+- A live testnet DID has resolved successfully, but no passkey `did:key`, update transaction hash,
+  proof file, or proof recording is present in this checkout.
 - H3 cannot be marked passed until the live DID update is submitted, confirmed, and re-resolved.
 - H4 local source audit passes, but the full browser/passkey login must still be recorded against a
   live updated DID.

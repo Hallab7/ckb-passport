@@ -1,6 +1,7 @@
 # Explorer Evidence
 
-Status: not captured in this checkout.
+Status: not captured in this checkout. The supplied testnet DID has live read evidence, but explorer
+update evidence is still missing.
 
 The PoC uses the CKB Pudge testnet explorer at:
 
@@ -18,7 +19,7 @@ Required values:
 
 | Field | Environment variable | Status |
 |---|---|---|
-| Testnet DID | `CKB_PASSPORT_LIVE_DID` | Missing |
+| Testnet DID | `CKB_PASSPORT_LIVE_DID` | Present: `did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` |
 | Passkey verification method | `CKB_PASSPORT_AUTH_DID_KEY` | Missing |
 | DID update transaction hash | `CKB_PASSPORT_UPDATE_TX_HASH` | Missing |
 | Capacity in shannons | `CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` | Optional, missing |

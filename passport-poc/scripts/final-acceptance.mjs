@@ -24,6 +24,7 @@ if (checkOnly) {
         command: "npm run acceptance:verify",
         localChecks: [
           "one-command demo check",
+          "supplied live DID resolver evidence",
           "vectors.json includes all required negatives",
           "REPORT.md includes H1 through H4 outcomes",
           "H4 source audit exists",
@@ -48,6 +49,7 @@ const readme = readFileSync("README.md", "utf8");
 const addressAudit = readFileSync("ADDRESS-AUDIT.md", "utf8");
 const explorerEvidence = readFileSync("EXPLORER-EVIDENCE.md", "utf8");
 const recording = readFileSync("RECORDING.md", "utf8");
+const suppliedLiveDid = "did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng";
 
 const vectorNames = new Set(vectors.map((vector) => vector.name));
 const missingNegativeVectors = requiredNegativeVectors.filter(
@@ -64,9 +66,17 @@ const items = [
     evidence: "README.md documents npm run demo and npm run demo:check passes in local audit",
   },
   {
+    id: "live_did_resolution",
+    status:
+      report.includes(suppliedLiveDid) && report.includes("targeted live resolver test")
+        ? "pass"
+        : "fail",
+    evidence: `${suppliedLiveDid} resolves from live testnet cells in the targeted resolver test`,
+  },
+  {
     id: "passkey_did_update",
     status: "unresolved",
-    evidence: "missing live DID, passkey did:key, signer, and update transaction evidence",
+    evidence: "missing passkey did:key, signer, and update transaction evidence",
   },
   {
     id: "verification_method_zdna",
