@@ -15,12 +15,12 @@ import {
   InMemoryNonceService,
   InMemorySessionService,
   loadPassportPocConfig,
-  submitDidVerificationMethodUpdate,
   verifySiwdProof,
   type PassportPocConfig,
   type PassportSession,
   type VerifySiwdProofResult,
 } from "@ckb-passport/siwd-verify";
+import { handleDidUpdateRequest } from "./live-update.js";
 
 export type DemoProofVerifier = (options: {
   proof: unknown;
@@ -137,50 +137,12 @@ export function createDemoServer(options: DemoServerOptions): Server {
 
       if (request.method === "POST" && url.pathname === "/api/did/update") {
         const body = await readJson(request);
-        const did = readRequiredString(body, "did");
-        const keyId = readRequiredString(body, "keyId");
-        const didKey = readRequiredString(body, "didKey");
-
-        if (env.CKB_PASSPORT_ENABLE_DID_UPDATE !== "1") {
-          return sendJson(response, 400, {
-            ok: false,
-            code: "did_update_disabled",
-            message: "live DID update is disabled for this demo server",
-          });
-        }
-        if (!env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY) {
-          return sendJson(response, 400, {
-            ok: false,
-            code: "missing_live_update_env",
-            message: "live DID update requires CKB_PASSPORT_DID_LOCK_PRIVATE_KEY",
-          });
-        }
-
-        const signer = new ccc.SignerCkbPrivateKey(
-          options.client,
-          env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY,
-        );
-        const result = await submitDidVerificationMethodUpdate({
+        const result = await handleDidUpdateRequest({
+          body,
           client: options.client,
-          signer,
-          did,
-          keyId,
-          didKey,
+          env,
         });
-
-        if (!result.ok) {
-          return sendJson(response, 400, result);
-        }
-
-        return sendJson(response, 200, {
-          ok: true,
-          did: result.did,
-          keyId: result.keyId,
-          didKey: result.didKey,
-          txHash: result.txHash,
-          capacityShannons: result.capacityShannons,
-          note: "passkey did:key was written with the DID cell lock signer",
-        });
+        return sendJson(response, result.status, result.body);
       }
 
       if (request.method === "GET" && url.pathname === "/api/session") {

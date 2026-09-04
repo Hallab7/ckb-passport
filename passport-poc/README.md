@@ -15,6 +15,7 @@ npm run probe:sdk
 npm run demo
 npm run drill:check
 npm run evidence:check
+npm run audit:h4
 ```
 
 `npm run demo` is the one-command local startup path after dependencies are installed. It builds
@@ -42,6 +43,10 @@ npm run evidence:explorer
 The evidence script validates the configured testnet DID, passkey `did:key:zDna...`, update
 transaction hash, and optional capacity value, then prints a Pudge explorer transaction URL.
 `EXPLORER-EVIDENCE.md` records the current evidence status.
+
+`npm run audit:h4` checks the login/session/browser proof code for address or spend-authority
+leaks and keeps registration/update findings separate. The current summary is in
+`ADDRESS-AUDIT.md`.
 
 The live DID update gate is opt-in:
 

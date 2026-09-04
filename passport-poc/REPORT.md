@@ -136,3 +136,12 @@ testnet explorer. This checkout has no live DID update transaction hash, so
 `EXPLORER-EVIDENCE.md` records the evidence as not captured and `npm run evidence:explorer` fails
 with `missing_explorer_evidence` until the live DID, passkey `did:key`, and update transaction hash
 are supplied.
+
+## Address and Spend-Authority Audit Status
+
+`npm run audit:h4` scans the login server, session store, browser demo state, proof envelopes, and
+browser proof builders for CKB address disclosure, lock scripts, lock hashes, transaction
+skeletons, transaction signatures, and browser storage. The login path audit passes: the server
+session stores only DID, key ID, issued time, and expiration time. DID lock signing and transaction
+submission are isolated to registration/update code and are disabled in the demo server unless
+`CKB_PASSPORT_ENABLE_DID_UPDATE=1`.
