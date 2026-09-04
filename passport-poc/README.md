@@ -42,6 +42,7 @@ npm run audit:scaffold
 npm run demo:check
 npm run drill:check
 npm run evidence:check
+npm run recording:check
 ```
 
 `npm test` runs every package test, including `vectors/vectors.json`. The live resolver test is
@@ -184,6 +185,17 @@ npm run audit:h4
 `ADDRESS-AUDIT.md` records the current source audit. Login/session/proof code stores only DID, key
 ID, issued time, and expiration time. DID lock signing and transaction submission are isolated to
 registration/update code and disabled unless `CKB_PASSPORT_ENABLE_DID_UPDATE=1`.
+
+## Recording
+
+`RECORDING.md` defines the expected evidence recording and current status. Verify a captured video
+with:
+
+```powershell
+npm run recording:verify
+```
+
+Set `CKB_PASSPORT_RECORDING` to override the default `evidence/passport-poc-recording.mp4` path.
 
 ## Vectors
 

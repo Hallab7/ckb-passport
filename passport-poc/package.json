@@ -20,6 +20,8 @@
     "evidence:explorer": "node scripts/explorer-evidence.mjs",
     "evidence:check": "node scripts/explorer-evidence.mjs --check",
     "audit:h4": "node scripts/address-audit.mjs",
+    "recording:check": "node scripts/recording-check.mjs --check",
+    "recording:verify": "node scripts/recording-check.mjs",
     "demo": "node scripts/run-demo.mjs",
     "demo:check": "node scripts/run-demo.mjs --check"
   },

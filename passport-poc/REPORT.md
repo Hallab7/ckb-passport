@@ -99,6 +99,14 @@ checkout. `npm run evidence:explorer` validates `CKB_PASSPORT_LIVE_DID`,
 `CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS`, then prints a Pudge testnet explorer transaction URL.
 Until those values exist, `EXPLORER-EVIDENCE.md` remains marked as not captured.
 
+## Recording Evidence
+
+`RECORDING.md` defines the expected video artifact and required scenes: tests passing, passkey
+registration or exact H3 failure, DID update or exact update blocker, session contents after
+sign-in, and identical-proof replay rejection. No recording is present in this checkout, and
+`npm run recording:verify` fails with `recording_missing` until a non-empty recording file is
+provided.
+
 ## Full Project Implication
 
 The local implementation shows the protocol shape is viable enough to proceed to a live gate: the
