@@ -77,3 +77,9 @@ and URI origin to the configured relying-party origin, enforces version, network
 and nonce rules, and consumes the nonce before resolver or signature verification runs. Tests cover
 wrong domain, wrong URI origin, expired messages, future `issuedAt`, replay, wrong network, bad
 version, invalid DID syntax, and proof/message key mismatches.
+
+## Verifier Resolver and Key Checks Status
+
+The verifier now composes the duplicate-safe DID resolver, SDK-backed DID document decoder, and
+verification method selector into a single resolver/key check. Tests cover successful P-256 key
+selection, zero live cells, absent `keyId`, and unsupported `did:key` multicodec failure.

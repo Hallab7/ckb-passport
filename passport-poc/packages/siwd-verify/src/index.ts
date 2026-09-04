@@ -9,6 +9,11 @@ export type {
   PassportPocConfig,
   PassportPocNetwork,
 } from "./config.js";
+export { verifySiwdKeyChecks } from "./key-checks.js";
+export type {
+  VerifySiwdKeyChecksOptions,
+  VerifySiwdKeyChecksResult,
+} from "./key-checks.js";
 export { generateNonce, InMemoryNonceService } from "./nonce.js";
 export type {
   NonceConsumeResult,
