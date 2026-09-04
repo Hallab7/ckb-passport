@@ -20,6 +20,12 @@ export {
 } from "./did-key.js";
 export type { DecodedDidKey, DidKeyCurve } from "./did-key.js";
 export {
+  assertLowSSignature,
+  isLowSSignature,
+  normalizeRawEcdsaSignature,
+  SignaturePolicyError,
+} from "./ecdsa.js";
+export {
   buildSiwdMessage,
   parseSiwdMessage,
   SiwdMessageParseError,
