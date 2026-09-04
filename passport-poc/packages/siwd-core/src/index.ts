@@ -1,4 +1,18 @@
 export {
+  assertRawEcdsaSignature,
+  base64UrlDecode,
+  base64UrlEncode,
+  bytesFromInput,
+  bytesFromUtf8,
+  bytesToHex,
+  constantTimeBytesEqual,
+  hexToBytes,
+  isRawEcdsaSignature,
+  RAW_ECDSA_SIGNATURE_LENGTH,
+  sha256Bytes,
+} from "./bytes.js";
+export type { BytesInput } from "./bytes.js";
+export {
   buildSiwdMessage,
   parseSiwdMessage,
   SiwdMessageParseError,
