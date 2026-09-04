@@ -9,6 +9,12 @@ export type {
   PassportPocConfig,
   PassportPocNetwork,
 } from "./config.js";
+export { generateNonce, InMemoryNonceService } from "./nonce.js";
+export type {
+  NonceConsumeResult,
+  NonceRecord,
+  NonceServiceOptions,
+} from "./nonce.js";
 export {
   hashCkbPersonalMessage,
   recoverableHexToRawSignatureHex,
@@ -18,4 +24,3 @@ export {
   walletSigningConvention,
 } from "./wallet-signing.js";
 export type { WalletSigningConvention } from "./wallet-signing.js";
-
