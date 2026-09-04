@@ -1,0 +1,21 @@
+{
+  "name": "@ckb-passport/poc-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Testnet proof of concept for Sign-In with CKB DID.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "audit:scaffold": "node scripts/audit-scaffold.mjs",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "demo": "npm run dev -w @ckb-passport/demo"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+

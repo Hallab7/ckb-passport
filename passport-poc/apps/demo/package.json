@@ -1,0 +1,13 @@
+{
+  "name": "@ckb-passport/demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal relying-party demo for Passport PoC.",
+  "scripts": {
+    "build": "node scripts/scaffold-ok.mjs",
+    "dev": "node scripts/scaffold-ok.mjs",
+    "test": "node scripts/scaffold-ok.mjs"
+  }
+}
+

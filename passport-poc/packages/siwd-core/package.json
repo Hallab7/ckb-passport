@@ -1,0 +1,15 @@
+{
+  "name": "@ckb-passport/siwd-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Core SIWD message and encoding utilities.",
+  "scripts": {
+    "build": "node scripts/scaffold-ok.mjs",
+    "test": "node scripts/scaffold-ok.mjs"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  }
+}
+

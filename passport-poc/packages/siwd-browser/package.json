@@ -1,0 +1,15 @@
+{
+  "name": "@ckb-passport/siwd-browser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser helpers for passkey and wallet SIWD proofs.",
+  "scripts": {
+    "build": "node scripts/scaffold-ok.mjs",
+    "test": "node scripts/scaffold-ok.mjs"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  }
+}
+
