@@ -72,3 +72,16 @@ CKB_DID_HASH_TYPE=type
 ```
 
 Mainnet runtime config is rejected in this PoC package to preserve the testnet-only scope.
+
+## Wallet Fallback Status
+
+The local fallback convention is pinned to CCC's `CkbSecp256k1` message signing path:
+
+```text
+signed payload = hashCkb(utf8("Nervos Message:" + message))
+signer output  = 0x-prefixed 65-byte recoverable secp256k1 signature
+PoC envelope   = base64url(raw r||s, 64 bytes)
+```
+
+This is verified against `SignerCkbPrivateKey`. Browser wallet behavior still needs live
+confirmation before H2 can rely on wallet mode outside local fixtures.
