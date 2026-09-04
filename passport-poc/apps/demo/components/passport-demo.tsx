@@ -2,18 +2,23 @@
 
 import {
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   Clipboard,
   ExternalLink,
   Fingerprint,
+  FileText,
+  History,
   KeyRound,
   Link2,
   Loader2,
-  Play,
+  LockKeyhole,
   RefreshCw,
   RotateCcw,
   Send,
+  Server,
   ShieldCheck,
+  Terminal,
   Trash2,
   Wallet,
 } from "lucide-react";
@@ -124,9 +129,42 @@ export function PassportDemo() {
   }, [browserOrigin, config]);
 
   const expectedOriginUrl = config?.expectedOrigin ?? "http://localhost:3000";
+  const resolverMethods = readRecord(results.resolver.verificationMethods);
+  const resolvedDidKey = resolverMethods ? readString(resolverMethods[keyId]) : "";
   const explorerUrl = readString(results.explorer.updateTransactionUrl);
-  const hasUsableDidKey = didKey.startsWith("did:key:zDna");
-  const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(txHash);
+  const updateTxHash = readString(results.update.txHash);
+  const evidenceTxHash = readString(results.explorer.updateTransactionHash);
+  const displayDidKey = didKey || resolvedDidKey;
+  const displayTxHash = txHash || updateTxHash || evidenceTxHash;
+  const displayCapacityShannons =
+    capacityShannons ||
+    readString(results.update.capacityShannons) ||
+    readString(results.resolver.capacityShannons);
+  const displayFeePaidShannons =
+    feePaidShannons || readString(results.update.feePaidShannons);
+  const activeSession = readRecord(results.session.session);
+  const authenticated = results.session.authenticated === true;
+  const hasLocalDidKey = didKey.startsWith("did:key:zDna");
+  const hasUsableDidKey = displayDidKey.startsWith("did:key:zDna");
+  const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(displayTxHash);
+  const replayRejected = readString(results.verify.code) === "nonce_consumed";
+  const keyMatchLabel =
+    resolvedDidKey && didKey
+      ? resolvedDidKey === didKey
+        ? "matching"
+        : "different"
+      : "not checked";
+  const didStateLabel = results.resolver.ok === true ? "Live" : "Unresolved";
+  const authKeyLabel = resolvedDidKey
+    ? "On-chain"
+    : hasLocalDidKey
+      ? "Local"
+      : "Pending";
+  const updateStateLabel = hasTxHash ? "Committed" : "Pending";
+  const replayStateLabel = replayRejected ? "Rejected" : "Unchecked";
+  const capacityCkb = displayCapacityShannons
+    ? `${formatCkb(displayCapacityShannons)} CKB`
+    : "Pending";
 
   const steps = [
     {
@@ -137,7 +175,7 @@ export function PassportDemo() {
     {
       label: "Register Passkey",
       detail: "Create did:key",
-      state: hasUsableDidKey ? "pass" : resultState(results.passkey),
+      state: hasLocalDidKey ? "pass" : resultState(results.passkey),
     },
     {
       label: "Write DID",
@@ -162,12 +200,22 @@ export function PassportDemo() {
     {
       label: "Replay Check",
       detail: "Nonce consumed",
-      state:
-        readString(results.verify.code) === "nonce_consumed"
-          ? "pass"
-          : "idle",
+      state: replayRejected ? "pass" : "idle",
     },
   ];
+  const completedStepCount = steps.filter((step) => step.state === "pass").length;
+  const nextAction = getNextAction({
+    domainReady,
+    resolved: results.resolver.ok === true,
+    didKeyReady: hasLocalDidKey,
+    walletReady: Boolean(evmAccount),
+    txReady: hasTxHash,
+    roundTripReady: results.roundtrip.ok === true,
+    explorerReady: Boolean(explorerUrl),
+    nonceReady: Boolean(message),
+    signedIn: results.verify.ok === true,
+    replayChecked: replayRejected,
+  });
 
   async function loadConfig() {
     await run("config", async () => {
@@ -187,6 +235,14 @@ export function PassportDemo() {
   async function resolveDid() {
     await run("resolve", async () => {
       const body = await postJson("/api/did/resolve", { did });
+      const verificationMethods = readRecord(body.verificationMethods);
+      const resolvedDidKey = verificationMethods
+        ? readString(verificationMethods[keyId])
+        : "";
+      const resolvedCapacityShannons = readString(body.capacityShannons);
+      if (resolvedCapacityShannons && !capacityShannons) {
+        setCapacityShannons(resolvedCapacityShannons);
+      }
       setResults((current) => ({ ...current, resolver: body }));
     });
   }
@@ -253,7 +309,7 @@ export function PassportDemo() {
       const prepared = await postJson("/api/did/wallet-update/prepare", {
         did,
         keyId,
-        didKey,
+        didKey: displayDidKey,
         evmAccount: account,
         feeRate: feeRateShannonsPerKw,
       });
@@ -303,7 +359,11 @@ export function PassportDemo() {
 
   async function checkRoundTrip() {
     await run("roundtrip", async () => {
-      const body = await postJson("/api/did/roundtrip", { did, keyId, didKey });
+      const body = await postJson("/api/did/roundtrip", {
+        did,
+        keyId,
+        didKey: displayDidKey,
+      });
       setResults((current) => ({ ...current, roundtrip: body }));
     });
   }
@@ -313,9 +373,9 @@ export function PassportDemo() {
       const body = await postJson("/api/evidence/explorer", {
         did,
         keyId,
-        didKey,
-        txHash,
-        capacityShannons,
+        didKey: displayDidKey,
+        txHash: displayTxHash,
+        capacityShannons: displayCapacityShannons,
       });
       setResults((current) => ({ ...current, explorer: body }));
     });
@@ -458,32 +518,37 @@ export function PassportDemo() {
 
   return (
     <main className="app-shell">
-      <section className="hero-band">
-        <div className="hero-copy">
-          <div className="brand-row">
-            <span className="brand-mark">
-              <ShieldCheck size={22} aria-hidden="true" />
-            </span>
-            <span>CKB Passport PoC</span>
-          </div>
-          <h1>Guided DID sign-in demo</h1>
-          <div className="config-strip">
-            <StatusBadge label={config?.network ?? "loading"} state={config ? "pass" : "idle"} />
-            <StatusBadge label={config?.rpId ?? "rp"} state={domainReady ? "pass" : "blocked"} />
-            <StatusBadge label="testnet only" state="pass" />
-          </div>
-        </div>
-        <div className="top-actions">
+      <section className="announcement-bar" aria-label="Demo environment">
+        <span>Live testnet</span>
+        <strong>{shortenMiddle(did, 18, 12)}</strong>
+        <span>{config?.didUpdateInput ?? "loading"}</span>
+      </section>
+
+      <header className="top-nav">
+        <a className="nav-brand" href="#identity">
+          <span className="brand-mark">
+            <ShieldCheck size={20} aria-hidden="true" />
+          </span>
+          <span>Passport</span>
+        </a>
+        <nav className="nav-links" aria-label="Demo sections">
+          <a href="#resolve">Resolve</a>
+          <a href="#register">Register</a>
+          <a href="#update">Update</a>
+          <a href="#signin">Sign In</a>
+          <a href="#trust">Trust</a>
+        </nav>
+        <div className="nav-actions">
           <ActionButton
             icon={<RefreshCw size={16} />}
-            label="Reload Config"
+            label="Config"
             title="Reload config"
             busy={busy === "config"}
             onClick={loadConfig}
             variant="secondary"
           />
           <ActionButton
-            icon={<RefreshCw size={16} />}
+            icon={<Server size={16} />}
             label="Session"
             title="Refresh session"
             busy={busy === "session"}
@@ -499,263 +564,682 @@ export function PassportDemo() {
             variant="danger"
           />
         </div>
-      </section>
+      </header>
 
       {!domainReady ? (
         <section className="domain-alert" role="alert">
           <AlertTriangle size={18} aria-hidden="true" />
           <div>
-            <strong>Open the configured origin before using passkeys.</strong>
+            <strong>Configured origin required for passkeys.</strong>
             <a href={expectedOriginUrl}>{expectedOriginUrl}</a>
           </div>
         </section>
       ) : null}
 
-      <section className="workspace-grid">
-        <aside className="run-order" aria-label="Run order">
+      <section className="registry-hero">
+        <div className="hero-copy">
           <div className="section-heading">
-            <span>Run Order</span>
+            {`REGISTRY / PASSPORT DEMO / ${(config?.network ?? "LOADING").toUpperCase()}`}
           </div>
-          <ol>
-            {steps.map((step, index) => (
-              <li key={step.label} className={`step-row ${step.state}`}>
-                <span className="step-index">{index + 1}</span>
-                <span>
-                  <strong>{step.label}</strong>
-                  <small>{step.detail}</small>
-                </span>
-              </li>
-            ))}
-          </ol>
+          <h1>
+            <span>Proof without</span>
+            <span>wallet sign-in.</span>
+          </h1>
+          <p className="hero-description">
+            Resolve the live DID, publish auth-1, and verify the passkey session
+            from one browser console.
+          </p>
+          <div className="hero-ctas">
+            <ActionButton
+              icon={<Link2 size={16} />}
+              label="Resolve DID"
+              title="Resolve DID"
+              busy={busy === "resolve"}
+              onClick={resolveDid}
+            />
+            <ActionButton
+              icon={<Fingerprint size={16} />}
+              label="Register"
+              title="Register passkey"
+              busy={busy === "register"}
+              onClick={registerPasskey}
+              disabled={!domainReady}
+              variant="secondary"
+            />
+          </div>
+        </div>
+
+        <aside className="market-snapshot" aria-label="Live DID snapshot">
+          <div className="snapshot-head">
+            <span>Live Snapshot</span>
+            <StatusBadge
+              label={results.resolver.ok === true ? "live" : "pending"}
+              state={resultState(results.resolver)}
+            />
+          </div>
+          <div className="snapshot-balance">
+            <span>Remaining capacity</span>
+            <strong>{capacityCkb}</strong>
+          </div>
+          <div className="snapshot-grid">
+            <SnapshotItem label="DID state" value={didStateLabel} />
+            <SnapshotItem label="Auth key" value={authKeyLabel} />
+            <SnapshotItem label="Update" value={updateStateLabel} />
+            <SnapshotItem label="Replay" value={replayStateLabel} />
+          </div>
+          <div className="signal-chart" aria-hidden="true">
+            <span style={{ height: "32%" }} />
+            <span style={{ height: "64%" }} />
+            <span style={{ height: "46%" }} />
+            <span style={{ height: "78%" }} />
+            <span style={{ height: "58%" }} />
+            <span style={{ height: "88%" }} />
+            <span style={{ height: "70%" }} />
+            <span style={{ height: "100%" }} />
+          </div>
         </aside>
+      </section>
 
-        <section className="work-surface">
-          <Panel
-            eyebrow="Identity"
-            title="Resolve the testnet DID"
-            result={results.resolver}
-            actions={
-              <>
-                <ActionButton
-                  icon={<Link2 size={16} />}
-                  label="Resolve DID"
-                  title="Resolve DID"
-                  busy={busy === "resolve"}
-                  onClick={resolveDid}
-                />
-                <ActionButton
-                  icon={<KeyRound size={16} />}
-                  label="Nonce"
-                  title="Request nonce"
-                  busy={busy === "nonce"}
-                  onClick={requestNonce}
-                  variant="secondary"
-                />
-              </>
-            }
-          >
-            <div className="field-grid two">
-              <TextField label="DID" value={did} onChange={setDid} mono />
-              <TextField label="Key ID" value={keyId} onChange={setKeyId} mono />
-            </div>
-            <label className="text-label">
-              <span>Canonical SIWD Message</span>
-              <textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                spellCheck={false}
-                rows={9}
+      <section className="metrics-strip" aria-label="Live metrics">
+        <MetricTile label="DID State" value={didStateLabel} />
+        <MetricTile label="Auth Key" value={authKeyLabel} />
+        <MetricTile label="Update Tx" value={displayTxHash ? shortenMiddle(displayTxHash, 6, 6) : "Pending"} />
+        <MetricTile label="Replay" value={replayStateLabel} />
+      </section>
+
+      <section className="feature-editorial">
+        <div>
+          <span className="section-heading">Feature Editorial</span>
+          <h2>Every proof value is visible before the next action.</h2>
+        </div>
+        <div className="editorial-copy">
+          <DataRow
+            label="Current task"
+            value={nextAction}
+          />
+          <DataRow
+            label="Verified path"
+            value="DID cell, auth-1 key, nonce, passkey signature, replay guard"
+          />
+          <DataRow
+            label="Network"
+            value={config?.network ?? "loading"}
+          />
+        </div>
+      </section>
+
+      <section className="product-showcase" id="product">
+        <div className="showcase-head">
+          <div>
+            <span className="section-heading">Product Showcase</span>
+            <h2>Live relying-party console</h2>
+          </div>
+          <StatusBadge
+            label={`${completedStepCount}/${steps.length} complete`}
+            state={completedStepCount === steps.length ? "pass" : "idle"}
+          />
+        </div>
+
+        <section className="dashboard-layout">
+          <section className="main-stack">
+          <article className="identity-card" id="identity">
+            <div className="card-head">
+              <div>
+                <span className="eyebrow">CKB / DID Passport / Testnet</span>
+                <h2>Identity snapshot</h2>
+              </div>
+              <StatusBadge
+                label={results.resolver.ok === true ? "live" : "unresolved"}
+                state={resultState(results.resolver)}
               />
-            </label>
-            <ResultBlock title="Nonce" value={results.nonce} />
-          </Panel>
+            </div>
 
-          <Panel
-            eyebrow="Registration"
-            title="Create the passkey DID key"
-            result={results.passkey}
-            actions={
+            <div className="identifier-panel">
+              <div className="identifier-mark">CKB</div>
+              <div className="identifier-content">
+                <span>Your identifier</span>
+                <strong>{did}</strong>
+                <small>
+                  {displayTxHash
+                    ? `TX ${shortenMiddle(displayTxHash).toUpperCase()} / CAPACITY ${formatCkb(displayCapacityShannons)} CKB`
+                    : `RP ${config?.rpId ?? "loading"} / ${config?.network ?? "testnet"}`}
+                </small>
+              </div>
+            </div>
+
+            <div className="identity-actions">
               <ActionButton
-                icon={<Fingerprint size={16} />}
-                label="Register Passkey"
-                title="Register passkey"
-                busy={busy === "register"}
-                onClick={registerPasskey}
-                disabled={!domainReady}
+                icon={<Clipboard size={16} />}
+                label="Copy DID"
+                title="Copy DID"
+                busy={false}
+                onClick={() => copyValue("did", did)}
+                variant="secondary"
               />
-            }
-          >
-            <div className="field-grid two">
-              <ValueField
-                label="Credential ID"
-                value={credentialId}
-                onCopy={() => copyValue("credential", credentialId)}
-                copied={copied === "credential"}
-              />
-              <ValueField
-                label="Passkey did:key"
-                value={didKey}
-                onChange={setDidKey}
-                onCopy={() => copyValue("didKey", didKey)}
-                copied={copied === "didKey"}
-              />
+              {explorerUrl ? (
+                <a className="link-button" href={explorerUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink size={16} aria-hidden="true" />
+                  Explorer
+                </a>
+              ) : null}
             </div>
-          </Panel>
 
-          <Panel
-            eyebrow="DID Update"
-            title="Write auth-1 to the DID document"
-            result={results.update}
-            actions={
-              <>
-                <ActionButton
-                  icon={<Wallet size={16} />}
-                  label="Connect Wallet"
-                  title="Connect EVM wallet"
-                  busy={busy === "wallet"}
-                  onClick={connectEvmWallet}
-                  variant="secondary"
-                />
-                <ActionButton
-                  icon={<Send size={16} />}
-                  label="Submit With Wallet"
-                  title="Submit DID update with EVM wallet"
-                  busy={busy === "update"}
-                  onClick={updateDid}
-                  disabled={!hasUsableDidKey || !evmAccount}
-                />
-                <ActionButton
-                  icon={<RefreshCw size={16} />}
-                  label="Round Trip"
-                  title="Check DID round trip"
-                  busy={busy === "roundtrip"}
-                  onClick={checkRoundTrip}
-                  disabled={!hasUsableDidKey}
-                  variant="secondary"
-                />
-              </>
-            }
-          >
-            <div className="field-grid two">
-              <ValueField
-                label="OmniLock EVM wallet"
-                value={evmAccount}
-                onCopy={() => copyValue("evmAccount", evmAccount)}
-                copied={copied === "evmAccount"}
-              />
-              <TextField
-                label="Fee rate shannons/KW"
-                value={feeRateShannonsPerKw}
-                onChange={setFeeRateShannonsPerKw}
+            <div className="data-grid">
+              <DataRow label="Key ID" value={keyId} mono />
+              <DataRow
+                label="Current auth-1"
+                value={resolvedDidKey || "pending"}
                 mono
               />
-            </div>
-            <div className="field-grid one">
-              <ValueField
-                label="EVM chain ID"
-                value={evmChainId}
-                onCopy={() => copyValue("evmChainId", evmChainId)}
-                copied={copied === "evmChainId"}
+              <DataRow
+                label="Wallet"
+                value={evmAccount || "not connected"}
+                mono={Boolean(evmAccount)}
+              />
+              <DataRow
+                label="Update transaction"
+                value={displayTxHash || "pending"}
+                mono={Boolean(displayTxHash)}
               />
             </div>
-            <div className="field-grid two">
-              <TextField
-                label="Capacity shannons"
-                value={capacityShannons}
-                onChange={setCapacityShannons}
-                mono
-              />
-              <TextField
-                label="Fee paid shannons"
-                value={feePaidShannons}
-                onChange={setFeePaidShannons}
-                mono
-              />
-            </div>
-            <div className="field-grid one">
-              <ValueField
-                label="Update transaction hash"
-                value={txHash}
-                onChange={setTxHash}
-                onCopy={() => copyValue("txHash", txHash)}
-                copied={copied === "txHash"}
-              />
-            </div>
-          </Panel>
+          </article>
 
-          <Panel
-            eyebrow="Explorer"
-            title="Create explorer evidence"
-            result={results.explorer}
-            actions={
-              <>
-                <ActionButton
-                  icon={<ExternalLink size={16} />}
-                  label="Build Evidence"
-                  title="Build explorer evidence"
-                  busy={busy === "explorer"}
-                  onClick={createExplorerEvidence}
-                  disabled={!hasUsableDidKey || !hasTxHash}
+          <div className="overview-grid">
+            <DashboardCard
+              eyebrow="Document"
+              title="DID document"
+              icon={<FileText size={18} aria-hidden="true" />}
+              status={
+                <StatusBadge
+                  label={resolvedDidKey ? "resolved" : "waiting"}
+                  state={resolvedDidKey ? "pass" : "idle"}
                 />
-                {explorerUrl ? (
-                  <a className="link-button" href={explorerUrl} target="_blank" rel="noreferrer">
-                    <ExternalLink size={16} aria-hidden="true" />
-                    Open Explorer
-                  </a>
-                ) : null}
-              </>
-            }
-          >
-            <ResultBlock title="Round-trip result" value={results.roundtrip} />
-          </Panel>
-
-          <Panel
-            eyebrow="Authentication"
-            title="Sign in and prove replay rejection"
-            result={results.verify}
-            actions={
-              <>
-                <ActionButton
-                  icon={<Fingerprint size={16} />}
-                  label="Sign In"
-                  title="Sign in with passkey"
-                  busy={busy === "signin"}
-                  onClick={signInWithPasskey}
-                  disabled={!domainReady || !message || !hasUsableDidKey}
-                />
-                <ActionButton
-                  icon={<RotateCcw size={16} />}
-                  label="Replay"
-                  title="Replay last proof"
-                  busy={busy === "replay"}
-                  onClick={replayLastProof}
-                  disabled={!lastProof}
-                  variant="danger"
-                />
-              </>
-            }
-          >
-            <ResultBlock title="Session" value={results.session} />
-          </Panel>
-
-          <section className="evidence-ledger">
-            <div className="section-heading">
-              <span>Evidence Values</span>
-            </div>
-            <div className="ledger-grid">
-              <LedgerItem label="CKB_PASSPORT_LIVE_DID" value={did} />
-              <LedgerItem label="CKB_PASSPORT_AUTH_KEY_ID" value={keyId} />
-              <LedgerItem label="CKB_PASSPORT_AUTH_DID_KEY" value={didKey || "pending"} />
-              <LedgerItem label="CKB_PASSPORT_UPDATE_TX_HASH" value={txHash || "pending"} />
-              <LedgerItem
-                label="CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS"
-                value={capacityShannons || "optional"}
+              }
+            >
+              <DataRow label="Resolved auth-1" value={resolvedDidKey || "run resolve"} mono />
+              <DataRow label="Local passkey" value={didKey || "register or paste key"} mono />
+              <DataRow label="Key match" value={keyMatchLabel} />
+              <DataRow
+                label="Round trip"
+                value={results.roundtrip.ok === true ? "matching" : "not checked"}
               />
+            </DashboardCard>
+
+            <DashboardCard
+              eyebrow="Key material"
+              title="OmniLock wallet"
+              icon={<LockKeyhole size={18} aria-hidden="true" />}
+              status={
+                <StatusBadge
+                  label={evmAccount ? "connected" : "waiting"}
+                  state={evmAccount ? "pass" : "idle"}
+                />
+              }
+            >
+              <DataRow label="Update mode" value={config?.didUpdateInput ?? "loading"} />
+              <DataRow label="EVM account" value={evmAccount || "not connected"} mono />
+              <DataRow label="Chain ID" value={evmChainId || "not connected"} mono />
+            </DashboardCard>
+
+            <DashboardCard
+              eyebrow="Evidence"
+              title="Explorer proof"
+              icon={<Terminal size={18} aria-hidden="true" />}
+              status={
+                <StatusBadge
+                  label={explorerUrl ? "ready" : "pending"}
+                  state={explorerUrl ? "pass" : "idle"}
+                />
+              }
+            >
+              <DataRow label="Tx hash" value={displayTxHash || "pending"} mono />
+              <DataRow
+                label="Capacity"
+                value={
+                  displayCapacityShannons
+                    ? `${displayCapacityShannons} shannons`
+                    : "pending"
+                }
+                mono={Boolean(displayCapacityShannons)}
+              />
+              <DataRow
+                label="Fee paid"
+                value={
+                  displayFeePaidShannons
+                    ? `${displayFeePaidShannons} shannons`
+                    : "pending"
+                }
+                mono={Boolean(displayFeePaidShannons)}
+              />
+            </DashboardCard>
+
+            <DashboardCard
+              eyebrow="Session"
+              title="Passkey sign-in"
+              icon={<Server size={18} aria-hidden="true" />}
+              status={
+                <StatusBadge
+                  label={authenticated ? "active" : "unsigned"}
+                  state={authenticated ? "pass" : "idle"}
+                />
+              }
+            >
+              <DataRow label="Session DID" value={readString(activeSession?.did) || "none"} mono />
+              <DataRow label="Session key" value={readString(activeSession?.keyId) || "none"} mono />
+              <DataRow
+                label="Replay"
+                value={
+                  readString(results.verify.code) === "nonce_consumed"
+                    ? "rejected"
+                    : "not checked"
+                }
+              />
+            </DashboardCard>
+          </div>
+
+          <section className="operations">
+            <div className="section-heading">Workflow / Live Check</div>
+
+            <div id="resolve">
+              <Panel
+                eyebrow="Identity"
+                title="Resolve DID and request nonce"
+                result={results.resolver}
+                actions={
+                  <>
+                    <ActionButton
+                      icon={<Link2 size={16} />}
+                      label="Resolve DID"
+                      title="Resolve DID"
+                      busy={busy === "resolve"}
+                      onClick={resolveDid}
+                    />
+                    <ActionButton
+                      icon={<KeyRound size={16} />}
+                      label="Nonce"
+                      title="Request nonce"
+                      busy={busy === "nonce"}
+                      onClick={requestNonce}
+                      variant="secondary"
+                    />
+                  </>
+                }
+              >
+                <div className="field-grid two">
+                  <TextField label="DID" value={did} onChange={setDid} mono />
+                  <TextField label="Key ID" value={keyId} onChange={setKeyId} mono />
+                </div>
+                <label className="text-label">
+                  <span>Canonical SIWD Message</span>
+                  <textarea
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    spellCheck={false}
+                    rows={9}
+                  />
+                </label>
+                <ResultBlock title="Nonce" value={results.nonce} />
+              </Panel>
+            </div>
+
+            <div id="register">
+              <Panel
+                eyebrow="Registration"
+                title="Create passkey DID key"
+                result={results.passkey}
+                actions={
+                  <ActionButton
+                    icon={<Fingerprint size={16} />}
+                    label="Register Passkey"
+                    title="Register passkey"
+                    busy={busy === "register"}
+                    onClick={registerPasskey}
+                    disabled={!domainReady}
+                  />
+                }
+              >
+                <div className="field-grid two">
+                  <ValueField
+                    label="Credential ID"
+                    value={credentialId}
+                    onCopy={() => copyValue("credential", credentialId)}
+                    copied={copied === "credential"}
+                  />
+                  <ValueField
+                    label="Passkey did:key"
+                    value={didKey}
+                    onChange={setDidKey}
+                    onCopy={() => copyValue("didKey", didKey)}
+                    copied={copied === "didKey"}
+                  />
+                </div>
+              </Panel>
+            </div>
+
+            <div id="update">
+              <Panel
+                eyebrow="DID Update"
+                title="Write auth-1 to the DID document"
+                result={results.update}
+                actions={
+                  <>
+                    <ActionButton
+                      icon={<Wallet size={16} />}
+                      label="Connect Wallet"
+                      title="Connect EVM wallet"
+                      busy={busy === "wallet"}
+                      onClick={connectEvmWallet}
+                      variant="secondary"
+                    />
+                    <ActionButton
+                      icon={<Send size={16} />}
+                      label="Submit"
+                      title="Submit DID update with EVM wallet"
+                      busy={busy === "update"}
+                      onClick={updateDid}
+                      disabled={!hasLocalDidKey || !evmAccount}
+                    />
+                    <ActionButton
+                      icon={<RefreshCw size={16} />}
+                      label="Round Trip"
+                      title="Check DID round trip"
+                      busy={busy === "roundtrip"}
+                      onClick={checkRoundTrip}
+                      disabled={!hasUsableDidKey}
+                      variant="secondary"
+                    />
+                  </>
+                }
+              >
+                <div className="field-grid two">
+                  <ValueField
+                    label="OmniLock EVM wallet"
+                    value={evmAccount}
+                    onCopy={() => copyValue("evmAccount", evmAccount)}
+                    copied={copied === "evmAccount"}
+                  />
+                  <TextField
+                    label="Fee rate shannons/KW"
+                    value={feeRateShannonsPerKw}
+                    onChange={setFeeRateShannonsPerKw}
+                    mono
+                  />
+                </div>
+                <div className="field-grid one">
+                  <ValueField
+                    label="EVM chain ID"
+                    value={evmChainId}
+                    onCopy={() => copyValue("evmChainId", evmChainId)}
+                    copied={copied === "evmChainId"}
+                  />
+                </div>
+                <div className="field-grid two">
+                  <TextField
+                    label="Capacity shannons"
+                    value={capacityShannons}
+                    onChange={setCapacityShannons}
+                    mono
+                  />
+                  <TextField
+                    label="Fee paid shannons"
+                    value={feePaidShannons}
+                    onChange={setFeePaidShannons}
+                    mono
+                  />
+                </div>
+                <div className="field-grid one">
+                  <ValueField
+                    label="Update transaction hash"
+                    value={txHash}
+                    onChange={setTxHash}
+                    onCopy={() => copyValue("txHash", txHash)}
+                    copied={copied === "txHash"}
+                  />
+                </div>
+              </Panel>
+            </div>
+
+            <Panel
+              eyebrow="Explorer"
+              title="Create explorer evidence"
+              result={results.explorer}
+              actions={
+                <>
+                  <ActionButton
+                    icon={<ExternalLink size={16} />}
+                    label="Build Evidence"
+                    title="Build explorer evidence"
+                    busy={busy === "explorer"}
+                    onClick={createExplorerEvidence}
+                    disabled={!hasUsableDidKey || !hasTxHash}
+                  />
+                  {explorerUrl ? (
+                    <a className="link-button" href={explorerUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink size={16} aria-hidden="true" />
+                      Open Explorer
+                    </a>
+                  ) : null}
+                </>
+              }
+            >
+              <ResultBlock title="Round-trip result" value={results.roundtrip} />
+            </Panel>
+
+            <div id="signin">
+              <Panel
+                eyebrow="Authentication"
+                title="Sign in and prove replay rejection"
+                result={results.verify}
+                actions={
+                  <>
+                    <ActionButton
+                      icon={<Fingerprint size={16} />}
+                      label="Sign In"
+                      title="Sign in with passkey"
+                      busy={busy === "signin"}
+                      onClick={signInWithPasskey}
+                      disabled={!domainReady || !message || !hasUsableDidKey}
+                    />
+                    <ActionButton
+                      icon={<RotateCcw size={16} />}
+                      label="Replay"
+                      title="Replay last proof"
+                      busy={busy === "replay"}
+                      onClick={replayLastProof}
+                      disabled={!lastProof}
+                      variant="danger"
+                    />
+                  </>
+                }
+              >
+                <ResultBlock title="Session" value={results.session} />
+              </Panel>
             </div>
           </section>
         </section>
+
+        <aside className="side-stack" aria-label="Demo status">
+          <section className="run-order" aria-label="Run order">
+            <div className="section-heading">Run Order</div>
+            <ol>
+              {steps.map((step, index) => (
+                <li key={step.label} className={`step-row ${step.state}`}>
+                  <span className="step-index">{index + 1}</span>
+                  <span>
+                    <strong>{step.label}</strong>
+                    <small>{step.detail}</small>
+                  </span>
+                  {step.state === "idle" ? (
+                    <ArrowRight size={15} aria-hidden="true" />
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="activity-card">
+            <div className="card-head compact">
+              <div>
+                <span className="eyebrow">Section / Activity</span>
+                <h2>Operation history</h2>
+              </div>
+              <History size={18} aria-hidden="true" />
+            </div>
+            <ActivityRow
+              label="Resolve"
+              detail={results.resolver.ok === true ? "DID document loaded" : "Awaiting resolve"}
+              state={resultState(results.resolver)}
+            />
+            <ActivityRow
+              label="Update"
+              detail={displayTxHash ? shortenMiddle(displayTxHash) : "No transaction yet"}
+              state={hasTxHash ? "pass" : didUpdateState(results.update)}
+            />
+            <ActivityRow
+              label="Round trip"
+              detail={results.roundtrip.ok === true ? "auth-1 matched" : "Not checked"}
+              state={resultState(results.roundtrip)}
+            />
+            <ActivityRow
+              label="Sign in"
+              detail={authenticated ? "DID-only session active" : "No active session"}
+              state={authenticated ? "pass" : resultState(results.verify)}
+            />
+          </section>
+
+          <section className="evidence-ledger">
+            <div className="section-heading">Evidence Values</div>
+            <div className="ledger-grid">
+              <LedgerItem label="CKB_PASSPORT_LIVE_DID" value={did} />
+              <LedgerItem label="CKB_PASSPORT_AUTH_KEY_ID" value={keyId} />
+              <LedgerItem
+                label="CKB_PASSPORT_AUTH_DID_KEY"
+                value={displayDidKey || "pending"}
+              />
+              <LedgerItem
+                label="CKB_PASSPORT_UPDATE_TX_HASH"
+                value={displayTxHash || "pending"}
+              />
+              <LedgerItem
+                label="CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS"
+                value={displayCapacityShannons || "optional"}
+              />
+            </div>
+          </section>
+        </aside>
       </section>
+      </section>
+
+      <section className="trust-section" id="trust">
+        <div>
+          <span className="section-heading">Trust Section</span>
+          <h2>Proof boundaries</h2>
+        </div>
+        <div className="trust-grid">
+          <TrustItem label="Network" value={config?.network ?? "loading"} />
+          <TrustItem label="Credential" value="WebAuthn P-256" />
+          <TrustItem label="DID update" value={config?.didUpdateInput ?? "loading"} />
+          <TrustItem label="Replay guard" value={replayStateLabel} />
+        </div>
+      </section>
+
+      <footer className="site-footer">
+        <span>CKB Passport PoC</span>
+        <span>{did}</span>
+      </footer>
     </main>
+  );
+}
+
+function MetricTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="metric-tile">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function SnapshotItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="snapshot-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function TrustItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="trust-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function DashboardCard({
+  eyebrow,
+  title,
+  icon,
+  status,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  icon: React.ReactNode;
+  status: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <article className="dashboard-card">
+      <div className="card-head compact">
+        <div className="card-title">
+          <span className="card-icon">{icon}</span>
+          <span className="eyebrow">{eyebrow}</span>
+          <h2>{title}</h2>
+        </div>
+        {status}
+      </div>
+      <div className="data-list">{children}</div>
+    </article>
+  );
+}
+
+function DataRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="data-row">
+      <span>{label}</span>
+      <strong className={mono ? "mono" : undefined}>{value}</strong>
+    </div>
+  );
+}
+
+function ActivityRow({
+  label,
+  detail,
+  state,
+}: {
+  label: string;
+  detail: string;
+  state: "idle" | "pass" | "blocked";
+}) {
+  return (
+    <div className={`activity-row ${state}`}>
+      <span className="activity-dot" />
+      <div>
+        <strong>{label}</strong>
+        <small>{detail}</small>
+      </div>
+    </div>
   );
 }
 
@@ -983,8 +1467,88 @@ function didUpdateState(value: JsonRecord): "idle" | "pass" | "blocked" {
   return resultState(value);
 }
 
+function getNextAction({
+  domainReady,
+  resolved,
+  didKeyReady,
+  walletReady,
+  txReady,
+  roundTripReady,
+  explorerReady,
+  nonceReady,
+  signedIn,
+  replayChecked,
+}: {
+  domainReady: boolean;
+  resolved: boolean;
+  didKeyReady: boolean;
+  walletReady: boolean;
+  txReady: boolean;
+  roundTripReady: boolean;
+  explorerReady: boolean;
+  nonceReady: boolean;
+  signedIn: boolean;
+  replayChecked: boolean;
+}): string {
+  if (!domainReady) {
+    return "Open origin";
+  }
+  if (!resolved) {
+    return "Resolve DID";
+  }
+  if (!didKeyReady) {
+    return "Register key";
+  }
+  if (!walletReady) {
+    return "Connect wallet";
+  }
+  if (!txReady) {
+    return "Submit update";
+  }
+  if (!roundTripReady) {
+    return "Round trip";
+  }
+  if (!explorerReady) {
+    return "Build evidence";
+  }
+  if (!nonceReady) {
+    return "Request nonce";
+  }
+  if (!signedIn) {
+    return "Sign in";
+  }
+  if (!replayChecked) {
+    return "Replay proof";
+  }
+  return "Complete";
+}
+
 function readString(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : "";
+}
+
+function readRecord(value: JsonValue | undefined): JsonRecord | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : undefined;
+}
+
+function shortenMiddle(value: string, start = 10, end = 10): string {
+  if (value.length <= start + end + 1) {
+    return value;
+  }
+  return `${value.slice(0, start)}...${value.slice(-end)}`;
+}
+
+function formatCkb(shannons: string): string {
+  if (!/^\d+$/.test(shannons)) {
+    return "pending";
+  }
+  const value = BigInt(shannons);
+  const whole = value / 100_000_000n;
+  const fraction = (value % 100_000_000n).toString().padStart(8, "0");
+  const trimmedFraction = fraction.replace(/0+$/, "") || "0";
+  return `${whole}.${trimmedFraction}`;
 }
 
 function getEthereumProvider(): EthereumProvider {
