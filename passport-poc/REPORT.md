@@ -26,3 +26,11 @@ full-project work.
 Mocked resolver tests cover one, zero, duplicate, and malformed DID cases. A live testnet query is
 available by setting `CKB_PASSPORT_LIVE_DID` to a known live testnet identifier.
 
+## DID Document Decode Status
+
+Document decoding uses `DidCkbData.decode` from `@ckb-ccc/did-ckb`, which handles the Molecule
+union and DAG-CBOR document payload. The verifier validates the PoC document shape before later
+verification-method selection: `verificationMethods` must be an object with string values,
+`alsoKnownAs` must be an array of strings when present, and `services` must be an object when
+present. DID documents containing `type`, `rotationKeys`, `prev`, or `sig` fail closed.
+

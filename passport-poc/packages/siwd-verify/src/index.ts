@@ -18,6 +18,11 @@ export type {
 export { buildDidTypeScript, resolveDidCell } from "./resolver.js";
 export type { DidCellResolution, ResolveDidCellOptions } from "./resolver.js";
 export {
+  decodeDidDocumentFromCell,
+  validateDidCkbDocument,
+} from "./document.js";
+export type { DidCkbDocument, DidDocumentDecodeResult } from "./document.js";
+export {
   hashCkbPersonalMessage,
   recoverableHexToRawSignatureHex,
   WALLET_RAW_SIGNATURE_HEX_LENGTH,
