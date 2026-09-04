@@ -13,6 +13,13 @@ export {
 } from "./bytes.js";
 export type { BytesInput } from "./bytes.js";
 export {
+  decodeDidKey,
+  DidKeyCodecError,
+  encodeDidKey,
+  supportedDidKeyCurves,
+} from "./did-key.js";
+export type { DecodedDidKey, DidKeyCurve } from "./did-key.js";
+export {
   buildSiwdMessage,
   parseSiwdMessage,
   SiwdMessageParseError,
