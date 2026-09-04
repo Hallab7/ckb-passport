@@ -13,12 +13,24 @@ npm test
 npm run audit:scaffold
 npm run probe:sdk
 npm run demo
+npm run drill:check
 ```
 
 `npm run demo` is the one-command local startup path after dependencies are installed. It builds
 the workspace, then starts the relying-party demo on `CKB_PASSPORT_DEMO_PORT` or `3000`.
 Docker is not required for the PoC because nonce and session state are intentionally in memory and
 the app talks directly to the configured CKB testnet RPC.
+
+The live testnet drill is run with:
+
+```powershell
+npm run build
+npm run drill:testnet
+```
+
+Without `CKB_PASSPORT_LIVE_DID` and `CKB_PASSPORT_AUTH_DID_KEY`, the drill exits with
+`missing_e2e_testnet_inputs`. Set `CKB_PASSPORT_LIVE_PROOF_FILE` to a captured proof JSON file to
+check proof verification, DID-only session issuing, and replay rejection from the command line.
 
 The live DID update gate is opt-in:
 

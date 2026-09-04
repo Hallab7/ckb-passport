@@ -118,3 +118,12 @@ message, future `issuedAt`, replayed nonce, absent `keyId`, unsupported multicod
 signature, WebAuthn client origin mismatch, WebAuthn challenge mismatch, WebAuthn User Present
 clear, and zero live DID cells. The vector runner checks each negative vector against its specific
 expected failure code.
+
+## End-to-End Testnet Drill Status
+
+The checkout now includes `npm run drill:testnet`, which re-resolves the configured testnet DID,
+checks that `verificationMethods["auth-1"]` equals the expected passkey `did:key`, verifies an
+optional captured live proof file, issues a DID-only demo session, and replays the same proof to
+confirm `nonce_consumed`. The live drill has not been executed in this shell because
+`CKB_PASSPORT_LIVE_DID`, `CKB_PASSPORT_AUTH_DID_KEY`, and `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY` are
+not configured.
