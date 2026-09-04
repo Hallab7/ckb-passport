@@ -69,3 +69,8 @@ export {
   walletSigningConvention,
 } from "./wallet-signing.js";
 export type { WalletSigningConvention } from "./wallet-signing.js";
+export { verifyWalletSignature } from "./wallet-verify.js";
+export type {
+  VerifyWalletSignatureOptions,
+  VerifyWalletSignatureResult,
+} from "./wallet-verify.js";

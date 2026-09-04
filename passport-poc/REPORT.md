@@ -83,3 +83,11 @@ version, invalid DID syntax, and proof/message key mismatches.
 The verifier now composes the duplicate-safe DID resolver, SDK-backed DID document decoder, and
 verification method selector into a single resolver/key check. Tests cover successful P-256 key
 selection, zero live cells, absent `keyId`, and unsupported `did:key` multicodec failure.
+
+## Wallet Signature Verification Status
+
+Wallet-mode verification now requires `proof.mode == "wallet"`, rejects WebAuthn-only fields,
+requires a secp256k1 DID verification method, decodes the raw base64url signature, enforces low-S,
+and verifies ECDSA over the CCC CKB personal-message hash. Tests cover valid signatures, tampered
+messages, high-S rejection, wrong public keys, wrong proof mode, and wrong verification method
+curve.
