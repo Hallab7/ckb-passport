@@ -1,6 +1,8 @@
 import { ccc } from "@ckb-ccc/core";
 import { submitDidVerificationMethodUpdate } from "@ckb-passport/siwd-verify";
 import {
+  ApiError,
+  DEFAULT_FEE_RATE_SHANNONS_PER_KW,
   DEFAULT_KEY_ID,
   getRuntime,
   optionalString,
@@ -15,6 +17,7 @@ export async function submitDidUpdateFromUi(
   const did = requireString(body, "did");
   const keyId = optionalString(body, "keyId") ?? DEFAULT_KEY_ID;
   const didKey = requireString(body, "didKey");
+  const feeRate = readFeeRateShannonsPerKw(body.feeRate);
   const didLockPrivateKey =
     optionalString(body, "didLockPrivateKey") ??
     process.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY;
@@ -38,6 +41,7 @@ export async function submitDidUpdateFromUi(
     did,
     keyId,
     didKey,
+    feeRate,
   });
 
   if (!result.ok) {
@@ -56,7 +60,32 @@ export async function submitDidUpdateFromUi(
       didKey: result.didKey,
       txHash: result.txHash,
       capacityShannons: result.capacityShannons,
+      feeRateShannonsPerKw: result.feeRateShannonsPerKw,
+      feePaidShannons: result.feePaidShannons,
       explorerUrl: `${PUDGE_EXPLORER_BASE_URL}/transaction/${result.txHash}`,
     },
   };
+}
+
+function readFeeRateShannonsPerKw(value: unknown): string {
+  if (value === undefined || value === null || value === "") {
+    return DEFAULT_FEE_RATE_SHANNONS_PER_KW;
+  }
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new ApiError(
+      400,
+      "fee_rate_invalid",
+      "feeRate must be a positive integer string",
+    );
+  }
+
+  const text = String(value).trim();
+  if (!/^[1-9][0-9]*$/.test(text)) {
+    throw new ApiError(
+      400,
+      "fee_rate_invalid",
+      "feeRate must be a positive integer string",
+    );
+  }
+  return text;
 }

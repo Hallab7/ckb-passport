@@ -22,6 +22,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export const SESSION_COOKIE = "ckb_passport_session";
 export const DEFAULT_DID = "did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng";
 export const DEFAULT_KEY_ID = "auth-1";
+export const DEFAULT_FEE_RATE_SHANNONS_PER_KW = "1000";
 
 const SIWD_STATEMENT = "Sign in to Passport PoC";
 const PUDGE_EXPLORER_BASE_URL = "https://pudge.explorer.nervos.org";
@@ -66,6 +67,7 @@ export function configPayload(
     hasServerDidLockSigner: Boolean(process.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY),
     defaultDid: DEFAULT_DID,
     defaultKeyId: DEFAULT_KEY_ID,
+    defaultFeeRateShannonsPerKw: DEFAULT_FEE_RATE_SHANNONS_PER_KW,
   };
 }
 

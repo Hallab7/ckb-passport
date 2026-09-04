@@ -29,6 +29,7 @@ type ConfigPayload = {
   hasServerDidLockSigner: boolean;
   defaultDid: string;
   defaultKeyId: string;
+  defaultFeeRateShannonsPerKw: string;
 };
 
 type JsonValue =
@@ -75,6 +76,8 @@ export function PassportDemo() {
   const [didKey, setDidKey] = useState("");
   const [credentialId, setCredentialId] = useState("");
   const [didLockPrivateKey, setDidLockPrivateKey] = useState("");
+  const [feeRateShannonsPerKw, setFeeRateShannonsPerKw] = useState("1000");
+  const [feePaidShannons, setFeePaidShannons] = useState("");
   const [txHash, setTxHash] = useState("");
   const [capacityShannons, setCapacityShannons] = useState("");
   const [message, setMessage] = useState("");
@@ -161,6 +164,9 @@ export function PassportDemo() {
         setConfig(body as unknown as ConfigPayload);
         setDid(readString(body.defaultDid) || did);
         setKeyId(readString(body.defaultKeyId) || keyId);
+        setFeeRateShannonsPerKw(
+          readString(body.defaultFeeRateShannonsPerKw) || feeRateShannonsPerKw,
+        );
       }
     });
   }
@@ -235,11 +241,16 @@ export function PassportDemo() {
         keyId,
         didKey,
         didLockPrivateKey,
+        feeRate: feeRateShannonsPerKw,
       });
       if (body.ok) {
         setDidLockPrivateKey("");
         setTxHash(readString(body.txHash));
         setCapacityShannons(readString(body.capacityShannons));
+        setFeeRateShannonsPerKw(
+          readString(body.feeRateShannonsPerKw) || feeRateShannonsPerKw,
+        );
+        setFeePaidShannons(readString(body.feePaidShannons));
       }
       setResults((current) => ({ ...current, update: body }));
     });
@@ -554,9 +565,23 @@ export function PassportDemo() {
                 onChange={setDidLockPrivateKey}
               />
               <TextField
+                label="Fee rate shannons/KW"
+                value={feeRateShannonsPerKw}
+                onChange={setFeeRateShannonsPerKw}
+                mono
+              />
+            </div>
+            <div className="field-grid two">
+              <TextField
                 label="Capacity shannons"
                 value={capacityShannons}
                 onChange={setCapacityShannons}
+                mono
+              />
+              <TextField
+                label="Fee paid shannons"
+                value={feePaidShannons}
+                onChange={setFeePaidShannons}
                 mono
               />
             </div>

@@ -38,6 +38,7 @@ const result = await submitDidVerificationMethodUpdate({
   did: process.env.CKB_PASSPORT_LIVE_DID,
   didKey: process.env.CKB_PASSPORT_AUTH_DID_KEY,
   keyId: process.env.CKB_PASSPORT_AUTH_KEY_ID ?? "auth-1",
+  feeRate: process.env.CKB_PASSPORT_FEE_RATE_SHANNONS_PER_KW,
 });
 
 console.log(
@@ -50,6 +51,8 @@ console.log(
           didKey: result.didKey,
           txHash: result.txHash,
           capacityShannons: result.capacityShannons,
+          feeRateShannonsPerKw: result.feeRateShannonsPerKw,
+          feePaidShannons: result.feePaidShannons,
           note: "The passkey did:key was written using the DID cell lock signer, not the passkey.",
         }
       : result,

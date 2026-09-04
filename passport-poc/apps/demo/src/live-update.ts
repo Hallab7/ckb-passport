@@ -23,6 +23,7 @@ export async function handleDidUpdateRequest(
     };
   }
   const { did, keyId, didKey } = parsed;
+  const feeRate = parsed.feeRate;
 
   if (options.env.CKB_PASSPORT_ENABLE_DID_UPDATE !== "1") {
     return {
@@ -55,6 +56,7 @@ export async function handleDidUpdateRequest(
     did,
     keyId,
     didKey,
+    feeRate,
   });
 
   if (!result.ok) {
@@ -73,6 +75,8 @@ export async function handleDidUpdateRequest(
       didKey: result.didKey,
       txHash: result.txHash,
       capacityShannons: result.capacityShannons,
+      feeRateShannonsPerKw: result.feeRateShannonsPerKw,
+      feePaidShannons: result.feePaidShannons,
       note: "passkey did:key was written with the DID cell lock signer",
     },
   };
@@ -81,8 +85,18 @@ export async function handleDidUpdateRequest(
 function readDidUpdateBody(
   body: unknown,
 ):
-  | { ok: true; did: string; keyId: string; didKey: string }
-  | { ok: false; code: "request_field_invalid"; message: string } {
+  | {
+      ok: true;
+      did: string;
+      keyId: string;
+      didKey: string;
+      feeRate: string;
+    }
+  | {
+      ok: false;
+      code: "request_field_invalid" | "fee_rate_invalid";
+      message: string;
+    } {
   if (!isRecord(body)) {
     return {
       ok: false,
@@ -104,6 +118,11 @@ function readDidUpdateBody(
   const did = body.did;
   const keyId = body.keyId;
   const didKey = body.didKey;
+  const feeRate = readFeeRateShannonsPerKw(body.feeRate);
+  if (!feeRate.ok) {
+    return feeRate;
+  }
+
   if (
     typeof did !== "string" ||
     typeof keyId !== "string" ||
@@ -121,9 +140,35 @@ function readDidUpdateBody(
     did,
     keyId,
     didKey,
+    feeRate: feeRate.value,
   };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readFeeRateShannonsPerKw(value: unknown):
+  | { ok: true; value: string }
+  | { ok: false; code: "fee_rate_invalid"; message: string } {
+  if (value === undefined || value === null || value === "") {
+    return { ok: true, value: "1000" };
+  }
+  if (typeof value !== "string" && typeof value !== "number") {
+    return {
+      ok: false,
+      code: "fee_rate_invalid",
+      message: "feeRate must be a positive integer string",
+    };
+  }
+
+  const text = String(value).trim();
+  if (!/^[1-9][0-9]*$/.test(text)) {
+    return {
+      ok: false,
+      code: "fee_rate_invalid",
+      message: "feeRate must be a positive integer string",
+    };
+  }
+  return { ok: true, value: text };
 }

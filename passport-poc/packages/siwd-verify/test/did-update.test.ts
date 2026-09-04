@@ -118,7 +118,7 @@ describe("upsertP256VerificationMethod", () => {
 
 describe("prepareDidVerificationMethodUpdate", () => {
   it("uses the current DID cell lock and prepares transformed SDK data", async () => {
-    const cell = fakeCell(lock, 1_000_000_000n);
+    const cell = fakeCell(lock, 10_000_000_000n);
     const sourceDocument = {
       verificationMethods: {
         wallet: secpDidKey,
@@ -174,7 +174,7 @@ describe("prepareDidVerificationMethodUpdate", () => {
       id: didId,
       keyId: "auth-1",
       didKey,
-      capacityShannons: "1000000000",
+      capacityShannons: "10000000000",
     });
   });
 
@@ -205,42 +205,52 @@ describe("prepareDidVerificationMethodUpdate", () => {
 });
 
 describe("submitDidVerificationMethodUpdate", () => {
-  it("submits the prepared transaction through the caller-provided signer", async () => {
-    const cell = fakeCell(lock, 1_000_000_000n);
+  it("completes a positive fee before submitting the prepared transaction", async () => {
+    const cell = fakeCell(lock, 10_000_000_000n);
+    const client = fakeClient([cell]);
     const transfer: DidTransferFunction = async () => ({
-      tx: ccc.Transaction.from({}),
+      tx: fakeUpdateTx(cell),
       inIndex: 0,
       outIndex: 0,
     });
+    let feeAtSubmit = 0n;
+    let outputCapacityAtSubmit = 0n;
 
     const result = await submitDidVerificationMethodUpdate({
-      client: fakeClient([cell]),
+      client,
       did,
       didKey,
       transfer,
-      signer: {
-        sendTransaction: async () => `0x${"bb".repeat(32)}`,
-      },
+      feeRate: 1000n,
+      signer: fakeSigner(client, async (txLike) => {
+        const tx = ccc.Transaction.from(txLike);
+        feeAtSubmit = await tx.getFee(client);
+        outputCapacityAtSubmit = tx.outputs[0].capacity;
+        return `0x${"bb".repeat(32)}`;
+      }),
     });
 
     expect(result).toMatchObject({
       ok: true,
       txHash: `0x${"bb".repeat(32)}`,
+      feeRateShannonsPerKw: "1000",
+      feePaidShannons: feeAtSubmit.toString(),
     });
+    expect(feeAtSubmit > 0n).toBe(true);
+    expect(outputCapacityAtSubmit < 10_000_000_000n).toBe(true);
   });
 
   it("does not submit when preparation fails", async () => {
     let sendCalled = false;
+    const client = fakeClient([]);
     const result = await submitDidVerificationMethodUpdate({
-      client: fakeClient([]),
+      client,
       did,
       didKey,
-      signer: {
-        sendTransaction: async () => {
-          sendCalled = true;
-          return `0x${"bb".repeat(32)}`;
-        },
-      },
+      signer: fakeSigner(client, async () => {
+        sendCalled = true;
+        return `0x${"bb".repeat(32)}`;
+      }),
     });
 
     expect(sendCalled).toBe(false);
@@ -257,6 +267,7 @@ function fakeClient(cells: ccc.Cell[]): ccc.Client {
       codeHash: `0x${"99".repeat(32)}`,
       hashType: "type",
     }),
+    getCell: async () => undefined,
     findCellsByType: async function* () {
       for (const cell of cells) {
         yield cell;
@@ -266,11 +277,33 @@ function fakeClient(cells: ccc.Cell[]): ccc.Client {
 }
 
 function fakeCell(lockScript: ccc.Script, capacity: bigint): ccc.Cell {
-  return {
+  return ccc.Cell.from({
+    outPoint: {
+      txHash: `0x${"22".repeat(32)}`,
+      index: 0,
+    },
     cellOutput: {
       capacity,
       lock: lockScript,
     },
     outputData: "0x",
-  } as unknown as ccc.Cell;
+  });
+}
+
+function fakeUpdateTx(cell: ccc.Cell): ccc.Transaction {
+  const tx = ccc.Transaction.from({});
+  tx.addInput(cell);
+  tx.addOutput(cell.cellOutput, cell.outputData);
+  return tx;
+}
+
+function fakeSigner(
+  client: ccc.Client,
+  sendTransaction: (tx: ccc.TransactionLike) => Promise<string>,
+): ccc.Signer {
+  return {
+    client,
+    prepareTransaction: async (tx: ccc.TransactionLike) => ccc.Transaction.from(tx),
+    sendTransaction,
+  } as unknown as ccc.Signer;
 }

@@ -46,6 +46,8 @@ export type PreparedDidVerificationMethodUpdate =
       inIndex: number;
       outIndex: number;
       capacityShannons?: string;
+      feeRateShannonsPerKw?: string;
+      feePaidShannons?: string;
     }
   | {
       ok: false;
@@ -85,10 +87,12 @@ export type PrepareDidVerificationMethodUpdateOptions = {
 
 export type SubmitDidVerificationMethodUpdateOptions =
   PrepareDidVerificationMethodUpdateOptions & {
-    signer: Pick<ccc.Signer, "sendTransaction">;
+    signer: ccc.Signer;
+    feeRate?: ccc.NumLike;
   };
 
 const DEFAULT_KEY_ID = "auth-1";
+const DEFAULT_FEE_RATE_SHANNONS_PER_KW = 1000n;
 
 export function upsertP256VerificationMethod(
   document: unknown,
@@ -234,9 +238,22 @@ export async function submitDidVerificationMethodUpdate(
   }
 
   try {
+    const feeRate = options.feeRate ?? DEFAULT_FEE_RATE_SHANNONS_PER_KW;
+    await prepared.tx.completeFeeChangeToOutput(
+      options.signer,
+      prepared.outIndex,
+      feeRate,
+      undefined,
+      { shouldAddInputs: false },
+    );
+    const feePaidShannons = stringifyCapacity(
+      await prepared.tx.getFee(options.client),
+    );
     const txHash = await options.signer.sendTransaction(prepared.tx);
     return {
       ...prepared,
+      feeRateShannonsPerKw: stringifyCapacity(feeRate),
+      feePaidShannons,
       txHash,
     };
   } catch (error) {
