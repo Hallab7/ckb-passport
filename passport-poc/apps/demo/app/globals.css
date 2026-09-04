@@ -417,6 +417,25 @@ h2 {
 .side-stack {
   position: sticky;
   top: 108px;
+  max-height: calc(100vh - 124px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.side-stack::-webkit-scrollbar {
+  width: 8px;
+}
+
+.side-stack::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.side-stack::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .identity-card,
@@ -776,6 +795,19 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+input:read-only,
+textarea:read-only {
+  cursor: default;
+}
+
+input:read-only {
+  color: var(--muted-strong);
+}
+
+textarea:read-only {
+  color: var(--muted);
+}
+
 .copy-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 38px;
@@ -983,6 +1015,9 @@ pre {
 
   .side-stack {
     position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .metrics-strip,

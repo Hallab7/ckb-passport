@@ -738,42 +738,22 @@ export function PassportDemo() {
             <div id="resolve">
               <Panel
                 eyebrow="Identity"
-                title="Resolve DID and request nonce"
+                title="Resolve DID"
                 result={results.resolver}
                 actions={
-                  <>
-                    <ActionButton
-                      icon={<Link2 size={16} />}
-                      label="Resolve DID"
-                      title="Resolve DID"
-                      busy={busy === "resolve"}
-                      onClick={resolveDid}
-                    />
-                    <ActionButton
-                      icon={<KeyRound size={16} />}
-                      label="Nonce"
-                      title="Request nonce"
-                      busy={busy === "nonce"}
-                      onClick={requestNonce}
-                      variant="secondary"
-                    />
-                  </>
+                  <ActionButton
+                    icon={<Link2 size={16} />}
+                    label="Resolve DID"
+                    title="Resolve DID"
+                    busy={busy === "resolve"}
+                    onClick={resolveDid}
+                  />
                 }
               >
                 <div className="field-grid two">
                   <TextField label="DID" value={did} onChange={setDid} mono />
                   <TextField label="Key ID" value={keyId} onChange={setKeyId} mono />
                 </div>
-                <label className="text-label">
-                  <span>Canonical SIWD Message</span>
-                  <textarea
-                    value={message}
-                    onChange={(event) => setMessage(event.target.value)}
-                    spellCheck={false}
-                    rows={9}
-                  />
-                </label>
-                <ResultBlock title="Nonce" value={results.nonce} />
               </Panel>
             </div>
 
@@ -803,7 +783,6 @@ export function PassportDemo() {
                   <ValueField
                     label="Passkey did:key"
                     value={didKey}
-                    onChange={setDidKey}
                     onCopy={() => copyValue("didKey", didKey)}
                     copied={copied === "didKey"}
                   />
@@ -834,15 +813,6 @@ export function PassportDemo() {
                       onClick={updateDid}
                       disabled={!hasLocalDidKey || !evmAccount}
                     />
-                    <ActionButton
-                      icon={<RefreshCw size={16} />}
-                      label="Round Trip"
-                      title="Check DID round trip"
-                      busy={busy === "roundtrip"}
-                      onClick={checkRoundTrip}
-                      disabled={!hasUsableDidKey}
-                      variant="secondary"
-                    />
                   </>
                 }
               >
@@ -869,25 +839,29 @@ export function PassportDemo() {
                   />
                 </div>
                 <div className="field-grid two">
-                  <TextField
+                  <ValueField
                     label="Capacity shannons"
-                    value={capacityShannons}
-                    onChange={setCapacityShannons}
-                    mono
+                    value={displayCapacityShannons}
+                    onCopy={() => copyValue("capacity", displayCapacityShannons)}
+                    copied={copied === "capacity"}
                   />
-                  <TextField
+                  <ValueField
                     label="Fee paid shannons"
-                    value={feePaidShannons}
-                    onChange={setFeePaidShannons}
-                    mono
+                    value={feePaidShannons || readString(results.update.feePaidShannons)}
+                    onCopy={() =>
+                      copyValue(
+                        "feePaid",
+                        feePaidShannons || readString(results.update.feePaidShannons),
+                      )
+                    }
+                    copied={copied === "feePaid"}
                   />
                 </div>
                 <div className="field-grid one">
                   <ValueField
                     label="Update transaction hash"
-                    value={txHash}
-                    onChange={setTxHash}
-                    onCopy={() => copyValue("txHash", txHash)}
+                    value={displayTxHash}
+                    onCopy={() => copyValue("txHash", displayTxHash)}
                     copied={copied === "txHash"}
                   />
                 </div>
@@ -900,6 +874,15 @@ export function PassportDemo() {
               result={results.explorer}
               actions={
                 <>
+                  <ActionButton
+                    icon={<RefreshCw size={16} />}
+                    label="Round Trip"
+                    title="Check DID round trip"
+                    busy={busy === "roundtrip"}
+                    onClick={checkRoundTrip}
+                    disabled={!hasUsableDidKey}
+                    variant="secondary"
+                  />
                   <ActionButton
                     icon={<ExternalLink size={16} />}
                     label="Build Evidence"
@@ -928,6 +911,14 @@ export function PassportDemo() {
                 actions={
                   <>
                     <ActionButton
+                      icon={<KeyRound size={16} />}
+                      label="Nonce"
+                      title="Request nonce"
+                      busy={busy === "nonce"}
+                      onClick={requestNonce}
+                      variant="secondary"
+                    />
+                    <ActionButton
                       icon={<Fingerprint size={16} />}
                       label="Sign In"
                       title="Sign in with passkey"
@@ -947,6 +938,11 @@ export function PassportDemo() {
                   </>
                 }
               >
+                <label className="text-label">
+                  <span>Canonical SIWD Message</span>
+                  <textarea value={message} readOnly spellCheck={false} rows={9} />
+                </label>
+                <ResultBlock title="Nonce" value={results.nonce} />
                 <ResultBlock title="Session" value={results.session} />
               </Panel>
             </div>
