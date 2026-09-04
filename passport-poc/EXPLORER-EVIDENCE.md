@@ -15,6 +15,9 @@ Run:
 npm run evidence:explorer
 ```
 
+The Next.js demo also builds the same evidence from the `Build Evidence` button after a transaction
+hash is available.
+
 Required values:
 
 | Field | Environment variable | Status |

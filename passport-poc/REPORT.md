@@ -3,10 +3,11 @@
 Date: 2026-09-04
 
 Status: local PoC implementation is complete and audited. The supplied testnet DID
-`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` resolves through the live resolver test. The live
-testnet drill, explorer proof, and recording are not complete in this checkout because no passkey
-`did:key`, DID lock private key, update transaction hash, captured proof file, or captured
-recording file is configured.
+`did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng` resolves through the live resolver test, and the demo is
+now a guided Next.js UI for collecting the remaining live evidence. The live testnet drill,
+explorer proof, and recording are not complete in this checkout because no passkey `did:key`, DID
+lock private key, update transaction hash, captured proof file, or captured recording file is
+configured.
 
 ## H3 - Passkey Registration And DID Update
 
@@ -52,12 +53,12 @@ live wallet and live passkey proofs still need captured testnet evidence.
 
 H4 passes as a local source and session audit. The verifier issues a random in-memory session token
 after proof verification, and the server-side session stores only DID, key ID, issued time, and
-expiration time. `npm run audit:h4` scans login server code, session objects, proof envelopes,
-browser demo state, and proof builders for CKB address disclosure, lock scripts, lock hashes,
-transaction skeletons, transaction signatures, and browser storage. The audit finds none in the
-login path. DID lock signing and transaction submission are isolated to registration/update code and
-are disabled unless `CKB_PASSPORT_ENABLE_DID_UPDATE=1`. H4 still needs the final browser recording
-against a live updated DID to prove the same result in an end-to-end run.
+expiration time. `npm run audit:h4` scans login server code, Next.js login/session routes, session
+objects, proof envelopes, browser demo state, and proof builders for CKB address disclosure, lock
+scripts, lock hashes, transaction skeletons, transaction signatures, and browser storage. The audit
+finds none in the login path. DID lock signing and transaction submission are isolated to
+registration/update code. H4 still needs the final browser recording against a live updated DID to
+prove the same result in an end-to-end run.
 
 ## Wallet Signing Convention
 
@@ -98,6 +99,7 @@ npm run probe:sdk    pass
 npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts pass
 npm run audit:h4     pass
 npm run drill:check  pass
+npm run demo:check   pass
 npm run evidence:check pass
 ```
 

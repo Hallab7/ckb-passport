@@ -21,7 +21,7 @@ Registration/update path:
 
 | Area | Result |
 |---|---|
-| DID update route | Disabled unless `CKB_PASSPORT_ENABLE_DID_UPDATE=1`. |
+| DID update route | Next.js route accepts the DID lock private key from the local UI or server env. |
 | DID lock signer | Used only for writing the passkey `did:key` into the DID document. |
 | Transaction submission | Isolated to registration/update code, not login. |
 

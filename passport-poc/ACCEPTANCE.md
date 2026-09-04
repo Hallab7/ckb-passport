@@ -13,7 +13,7 @@ Current result:
 
 | Acceptance item | Status | Evidence |
 |---|---|---|
-| One documented command runs the demo | Pass | `npm run demo`; `npm run demo:check` passes. |
+| One documented command runs the demo | Pass | `npm run demo` starts the guided Next.js demo; `npm run demo:check` passes. |
 | Supplied testnet DID resolves from live cells | Pass | `did:ckb:o5bfnlw5t75w5bgvillbz3jzdwa2lxng`; targeted live resolver test passes. |
 | Passkey registration creates or updates a DID | Unresolved | Requires passkey `did:key` and DID lock signer for the supplied live DID. |
 | `verificationMethods["auth-1"]` begins `did:key:zDna` on explorer | Unresolved | Requires update transaction hash and explorer evidence. |

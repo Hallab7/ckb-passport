@@ -13,7 +13,7 @@ configuration, and limits DID writes to an explicit live-update gate.
 packages/siwd-core      canonical message, field validation, bytes, did:key, low-S policy
 packages/siwd-browser   passkey registration/assertion helpers and wallet proof builder
 packages/siwd-verify    testnet config, DID resolver, document decoder, verifier, sessions
-apps/demo               local relying-party server and one-page browser demo
+apps/demo               Next.js relying-party demo with guided evidence workflow
 vectors/vectors.json    reusable positive and negative SIWD proof vectors
 ```
 
@@ -56,15 +56,27 @@ skipped unless `CKB_PASSPORT_LIVE_DID` is set. In this checkout,
 npm run demo
 ```
 
-After dependencies are installed, this command builds the workspace and starts the local
-relying-party app. Open the printed URL, usually:
+After dependencies are installed, this command builds the workspace and starts the local Next.js
+relying-party app on `localhost`. Open the printed URL, usually:
 
 ```text
-http://127.0.0.1:3000
+http://localhost:3000
 ```
 
 Docker is unnecessary for this PoC because all mutable relying-party state is in memory and CKB
 access goes through the configured testnet RPC.
+
+The page runs the live demo in order:
+
+1. Resolve the supplied testnet DID.
+2. Register a platform passkey and derive the P-256 `did:key:zDna...`.
+3. Paste the DID cell lock private key into the password field and submit the DID update.
+4. Re-check `verificationMethods["auth-1"]` against the live DID cell.
+5. Build the Pudge explorer evidence link from the returned transaction hash.
+6. Request a nonce, sign in with the passkey, inspect the DID-only session, and replay the proof.
+
+Do not enter the DID lock private key into a deployed or third-party server. The demo is intended to
+run locally on `localhost`.
 
 ## Environment
 
@@ -87,7 +99,7 @@ CKB_DID_CODE_HASH=0x510150477b10d6ab551a509b71265f3164e9fd4137fcb5a4322f49f03092
 CKB_DID_HASH_TYPE=type
 ```
 
-Live variables:
+Live variables for command-line scripts:
 
 | Setting | Purpose |
 |---|---|
@@ -121,22 +133,18 @@ Current package checked: `@ckb-ccc/did-ckb@0.2.9`.
 ## Passkey Flow
 
 The demo page can register a platform passkey, send the attestation object to the local server, and
-receive a P-256 `did:key:zDna...`. With live update explicitly enabled, the server can write that
-key into `verificationMethods["auth-1"]` using the DID cell lock signer.
+receive a P-256 `did:key:zDna...`. The Next.js UI can then submit the DID update by posting the
+passkey `did:key` and the DID cell lock private key to the local update route. The private key is
+used only for that update request and is cleared from the input after a successful submission.
 
 ```powershell
-$env:CKB_PASSPORT_ENABLE_DID_UPDATE="1"
-$env:CKB_PASSPORT_LIVE_DID="did:ckb:..."
-$env:CKB_PASSPORT_DID_LOCK_PRIVATE_KEY="0x..."
 npm run demo
 ```
 
 After the update transaction confirms:
 
-```powershell
-$env:CKB_PASSPORT_AUTH_DID_KEY="did:key:zDna..."
-npm run check:roundtrip
-```
+use the `Round Trip` and `Build Evidence` buttons in the UI. The command-line
+`npm run check:roundtrip` path remains available for scripted verification.
 
 Login does not submit a transaction. The WebAuthn assertion signs
 `SHA-256(canonicalMessage)`, and the verifier checks the resolved DID document, `clientDataJSON`,
@@ -186,7 +194,7 @@ npm run audit:h4
 
 `ADDRESS-AUDIT.md` records the current source audit. Login/session/proof code stores only DID, key
 ID, issued time, and expiration time. DID lock signing and transaction submission are isolated to
-registration/update code and disabled unless `CKB_PASSPORT_ENABLE_DID_UPDATE=1`.
+the registration/update route and are not part of login verification.
 
 ## Recording
 

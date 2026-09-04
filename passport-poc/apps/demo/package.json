@@ -3,16 +3,24 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Minimal relying-party demo for Passport PoC.",
+  "description": "Guided Next.js relying-party demo for Passport PoC.",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "node dist/server.js",
+    "build": "next build",
+    "dev": "next dev --hostname localhost",
     "test": "vitest run"
   },
   "dependencies": {
     "@ckb-ccc/core": "^1.19.1",
     "@ckb-passport/siwd-browser": "^0.0.0",
     "@ckb-passport/siwd-core": "^0.0.0",
-    "@ckb-passport/siwd-verify": "^0.0.0"
+    "@ckb-passport/siwd-verify": "^0.0.0",
+    "lucide-react": "^1.41.0",
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7"
   }
 }

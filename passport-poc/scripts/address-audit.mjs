@@ -3,6 +3,12 @@ import { readFileSync } from "node:fs";
 const loginFiles = [
   "apps/demo/src/server.ts",
   "apps/demo/public/app.js",
+  "apps/demo/app/api/nonce/route.ts",
+  "apps/demo/app/api/verify/route.ts",
+  "apps/demo/app/api/session/route.ts",
+  "apps/demo/app/api/session/clear/route.ts",
+  "apps/demo/components/passport-demo.tsx",
+  "apps/demo/lib/server-runtime.ts",
   "packages/siwd-verify/src/session.ts",
   "packages/siwd-verify/src/proof.ts",
   "packages/siwd-verify/src/verification.ts",
@@ -12,6 +18,9 @@ const loginFiles = [
 
 const registrationUpdateFiles = [
   "apps/demo/src/live-update.ts",
+  "apps/demo/app/api/did/update/route.ts",
+  "apps/demo/lib/did-update-runtime.ts",
+  "apps/demo/components/passport-demo.tsx",
   "packages/siwd-verify/src/did-update.ts",
   "scripts/update-did-method.mjs",
 ];
