@@ -15,6 +15,18 @@ export type {
   NonceRecord,
   NonceServiceOptions,
 } from "./nonce.js";
+export { verifySiwdMessageChecks } from "./proof.js";
+export type {
+  BaseSiwdProofEnvelope,
+  NonceConsumer,
+  SiwdProofEnvelope,
+  SiwdProofMode,
+  VerifySiwdMessageChecksFailureCode,
+  VerifySiwdMessageChecksOptions,
+  VerifySiwdMessageChecksResult,
+  WalletSiwdProofEnvelope,
+  WebAuthnSiwdProofEnvelope,
+} from "./proof.js";
 export { buildDidTypeScript, resolveDidCell } from "./resolver.js";
 export type { DidCellResolution, ResolveDidCellOptions } from "./resolver.js";
 export { checkDidVerificationMethodRoundTrip } from "./round-trip.js";

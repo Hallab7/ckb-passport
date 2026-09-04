@@ -69,3 +69,11 @@ returned DER ECDSA signature to raw `r||s`, normalizes locally created P-256 sig
 and returns a versioned `webauthn` proof envelope. The envelope intentionally contains the DID,
 key ID, canonical message, signature, `clientDataJSON`, and `authenticatorData`; it contains no
 wallet address, lock script, transaction skeleton, or spend signature.
+
+## Verifier Message Checks Status
+
+The verifier now parses the proof envelope and canonical SIWD message, compares the message domain
+and URI origin to the configured relying-party origin, enforces version, network, DID, timestamp,
+and nonce rules, and consumes the nonce before resolver or signature verification runs. Tests cover
+wrong domain, wrong URI origin, expired messages, future `issuedAt`, replay, wrong network, bad
+version, invalid DID syntax, and proof/message key mismatches.
