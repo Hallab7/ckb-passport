@@ -847,8 +847,21 @@ textarea:read-only {
 
 .copy-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.value-field {
+  min-width: 0;
+}
+
+.copy-shell input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .icon-button {
@@ -1230,13 +1243,17 @@ pre {
     width: 100%;
   }
 
-  .copy-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .icon-button,
   .action-button,
   .link-button {
     width: 100%;
+  }
+
+  .copy-shell {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .copy-shell .icon-button {
+    width: 38px;
+    justify-self: end;
   }
 }
