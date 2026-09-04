@@ -10,6 +10,8 @@
   },
   "exports": {
     ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "@ckb-ccc/did-ckb": "^0.2.9"
   }
 }
-

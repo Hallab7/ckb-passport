@@ -11,6 +11,7 @@
   "scripts": {
     "audit:scaffold": "node scripts/audit-scaffold.mjs",
     "build": "npm run build --workspaces --if-present",
+    "probe:sdk": "node scripts/probe-did-sdk.mjs",
     "test": "npm run test --workspaces --if-present",
     "demo": "npm run dev -w @ckb-passport/demo"
   },
@@ -18,4 +19,3 @@
     "node": ">=22"
   }
 }
-
