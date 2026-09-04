@@ -63,7 +63,7 @@ export function configPayload(
     rpId: new URL(config.expectedOrigin).hostname,
     didCodeHash: config.didCodeHash,
     didHashType: config.didHashType,
-    didUpdateInput: "ui-private-key-or-server-env",
+    didUpdateInput: "browser-evm-wallet",
     hasServerDidLockSigner: Boolean(process.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY),
     defaultDid: DEFAULT_DID,
     defaultKeyId: DEFAULT_KEY_ID,
@@ -299,6 +299,29 @@ export function optionalString(
     throw new ApiError(400, "request_field_invalid", `${field} must be a string`);
   }
   return value.trim();
+}
+
+export function readFeeRateShannonsPerKw(value: unknown): string {
+  if (value === undefined || value === null || value === "") {
+    return DEFAULT_FEE_RATE_SHANNONS_PER_KW;
+  }
+  if (typeof value !== "string" && typeof value !== "number") {
+    throw new ApiError(
+      400,
+      "fee_rate_invalid",
+      "feeRate must be a positive integer string",
+    );
+  }
+
+  const text = String(value).trim();
+  if (!/^[1-9][0-9]*$/.test(text)) {
+    throw new ApiError(
+      400,
+      "fee_rate_invalid",
+      "feeRate must be a positive integer string",
+    );
+  }
+  return text;
 }
 
 export function apiErrorResponse(error: unknown): NextResponse {

@@ -1,11 +1,10 @@
 import { submitDidVerificationMethodUpdate } from "@ckb-passport/siwd-verify";
 import { createDidLockSignerFromPrivateKey } from "./did-lock-signer";
 import {
-  ApiError,
-  DEFAULT_FEE_RATE_SHANNONS_PER_KW,
   DEFAULT_KEY_ID,
   getRuntime,
   optionalString,
+  readFeeRateShannonsPerKw,
   requireString,
 } from "./server-runtime";
 
@@ -77,27 +76,4 @@ export async function submitDidUpdateFromUi(
       explorerUrl: `${PUDGE_EXPLORER_BASE_URL}/transaction/${result.txHash}`,
     },
   };
-}
-
-function readFeeRateShannonsPerKw(value: unknown): string {
-  if (value === undefined || value === null || value === "") {
-    return DEFAULT_FEE_RATE_SHANNONS_PER_KW;
-  }
-  if (typeof value !== "string" && typeof value !== "number") {
-    throw new ApiError(
-      400,
-      "fee_rate_invalid",
-      "feeRate must be a positive integer string",
-    );
-  }
-
-  const text = String(value).trim();
-  if (!/^[1-9][0-9]*$/.test(text)) {
-    throw new ApiError(
-      400,
-      "fee_rate_invalid",
-      "feeRate must be a positive integer string",
-    );
-  }
-  return text;
 }

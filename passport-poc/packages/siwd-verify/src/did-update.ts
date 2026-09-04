@@ -61,6 +61,16 @@ export type PreparedDidVerificationMethodUpdate =
       didKey: string;
     };
 
+export type PreparedDidVerificationMethodUpdateSuccess = Extract<
+  PreparedDidVerificationMethodUpdate,
+  { ok: true }
+>;
+
+export type DidVerificationMethodUpdateFeeResult = {
+  feeRateShannonsPerKw: string;
+  feePaidShannons: string;
+};
+
 export type SubmittedDidVerificationMethodUpdate =
   | (Extract<PreparedDidVerificationMethodUpdate, { ok: true }> & {
       txHash: string;
@@ -90,6 +100,13 @@ export type SubmitDidVerificationMethodUpdateOptions =
     signer: ccc.Signer;
     feeRate?: ccc.NumLike;
   };
+
+export type CompletePreparedDidVerificationMethodUpdateFeeOptions = {
+  client: ccc.Client;
+  signer: ccc.Signer;
+  prepared: PreparedDidVerificationMethodUpdateSuccess;
+  feeRate?: ccc.NumLike;
+};
 
 const DEFAULT_KEY_ID = "auth-1";
 const DEFAULT_FEE_RATE_SHANNONS_PER_KW = 1000n;
@@ -238,22 +255,16 @@ export async function submitDidVerificationMethodUpdate(
   }
 
   try {
-    const feeRate = options.feeRate ?? DEFAULT_FEE_RATE_SHANNONS_PER_KW;
-    await prepared.tx.completeFeeChangeToOutput(
-      options.signer,
-      prepared.outIndex,
-      feeRate,
-      undefined,
-      { shouldAddInputs: false },
-    );
-    const feePaidShannons = stringifyCapacity(
-      await prepared.tx.getFee(options.client),
-    );
+    const feeResult = await completePreparedDidVerificationMethodUpdateFee({
+      client: options.client,
+      signer: options.signer,
+      prepared,
+      feeRate: options.feeRate,
+    });
     const txHash = await options.signer.sendTransaction(prepared.tx);
     return {
       ...prepared,
-      feeRateShannonsPerKw: stringifyCapacity(feeRate),
-      feePaidShannons,
+      ...feeResult,
       txHash,
     };
   } catch (error) {
@@ -269,6 +280,24 @@ export async function submitDidVerificationMethodUpdate(
       didKey: prepared.didKey,
     };
   }
+}
+
+export async function completePreparedDidVerificationMethodUpdateFee(
+  options: CompletePreparedDidVerificationMethodUpdateFeeOptions,
+): Promise<DidVerificationMethodUpdateFeeResult> {
+  const feeRate = options.feeRate ?? DEFAULT_FEE_RATE_SHANNONS_PER_KW;
+  await options.prepared.tx.completeFeeChangeToOutput(
+    options.signer,
+    options.prepared.outIndex,
+    feeRate,
+    undefined,
+    { shouldAddInputs: false },
+  );
+  return {
+    feeRateShannonsPerKw: stringifyCapacity(feeRate) ?? String(feeRate),
+    feePaidShannons:
+      stringifyCapacity(await options.prepared.tx.getFee(options.client)) ?? "0",
+  };
 }
 
 function stringifyCapacity(capacity: unknown): string | undefined {

@@ -64,15 +64,19 @@ export {
 } from "./document.js";
 export type { DidCkbDocument, DidDocumentDecodeResult } from "./document.js";
 export {
+  completePreparedDidVerificationMethodUpdateFee,
   prepareDidVerificationMethodUpdate,
   submitDidVerificationMethodUpdate,
   upsertP256VerificationMethod,
 } from "./did-update.js";
 export type {
+  CompletePreparedDidVerificationMethodUpdateFeeOptions,
+  DidVerificationMethodUpdateFeeResult,
   DidTransferFunction,
   DidVerificationMethodUpdateFailureCode,
   DidVerificationMethodUpdateResult,
   PreparedDidVerificationMethodUpdate,
+  PreparedDidVerificationMethodUpdateSuccess,
   PrepareDidVerificationMethodUpdateOptions,
   SubmittedDidVerificationMethodUpdate,
   SubmitDidVerificationMethodUpdateOptions,

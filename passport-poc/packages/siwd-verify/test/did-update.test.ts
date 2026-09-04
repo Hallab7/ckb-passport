@@ -3,6 +3,7 @@ import { ccc } from "@ckb-ccc/core";
 import { DidCkbData, argsToDid } from "@ckb-ccc/did-ckb";
 import { describe, expect, it } from "vitest";
 import {
+  completePreparedDidVerificationMethodUpdateFee,
   prepareDidVerificationMethodUpdate,
   submitDidVerificationMethodUpdate,
   upsertP256VerificationMethod,
@@ -205,6 +206,37 @@ describe("prepareDidVerificationMethodUpdate", () => {
 });
 
 describe("submitDidVerificationMethodUpdate", () => {
+  it("exposes fee completion for externally signed prepared transactions", async () => {
+    const cell = fakeCell(lock, 10_000_000_000n);
+    const client = fakeClient([cell]);
+    const prepared = await prepareDidVerificationMethodUpdate({
+      client,
+      did,
+      didKey,
+      transfer: async () => ({
+        tx: fakeUpdateTx(cell),
+        inIndex: 0,
+        outIndex: 0,
+      }),
+    });
+
+    expect(prepared.ok).toBe(true);
+    if (!prepared.ok) {
+      throw new Error(prepared.message);
+    }
+
+    const result = await completePreparedDidVerificationMethodUpdateFee({
+      client,
+      prepared,
+      feeRate: 1000n,
+      signer: fakeSigner(client, async () => `0x${"bb".repeat(32)}`),
+    });
+
+    expect(result.feeRateShannonsPerKw).toBe("1000");
+    expect(BigInt(result.feePaidShannons) > 0n).toBe(true);
+    expect(prepared.tx.outputs[0].capacity < 10_000_000_000n).toBe(true);
+  });
+
   it("completes a positive fee before submitting the prepared transaction", async () => {
     const cell = fakeCell(lock, 10_000_000_000n);
     const client = fakeClient([cell]);

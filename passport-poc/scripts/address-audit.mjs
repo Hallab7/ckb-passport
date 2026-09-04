@@ -19,8 +19,11 @@ const loginFiles = [
 const registrationUpdateFiles = [
   "apps/demo/src/live-update.ts",
   "apps/demo/app/api/did/update/route.ts",
+  "apps/demo/app/api/did/wallet-update/prepare/route.ts",
+  "apps/demo/app/api/did/wallet-update/submit/route.ts",
   "apps/demo/lib/did-lock-signer.ts",
   "apps/demo/lib/did-update-runtime.ts",
+  "apps/demo/lib/did-wallet-update-runtime.ts",
   "apps/demo/components/passport-demo.tsx",
   "packages/siwd-verify/src/did-update.ts",
   "scripts/update-did-method.mjs",
@@ -37,9 +40,9 @@ const forbiddenLoginPatterns = [
 ];
 
 const registrationUpdatePatterns = [
-  { code: "did_update_endpoint", pattern: /\/api\/did\/update/ },
+  { code: "did_update_endpoint", pattern: /\/api\/did\/(?:wallet-update|update)/ },
   { code: "update_gate", pattern: /CKB_PASSPORT_ENABLE_DID_UPDATE/ },
-  { code: "did_lock_signer", pattern: /CKB_PASSPORT_DID_LOCK_PRIVATE_KEY|SignerCkbPrivateKey|EvmPrivateKeySigner/ },
+  { code: "did_lock_signer", pattern: /CKB_PASSPORT_DID_LOCK_PRIVATE_KEY|SignerCkbPrivateKey|EvmPrivateKeySigner|SignerEvmAddressReadonly|personal_sign|verifyMessage/ },
   { code: "transaction_submission", pattern: /\b(sendTransaction|submitDidVerificationMethodUpdate)\b/ },
 ];
 

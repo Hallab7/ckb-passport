@@ -15,6 +15,7 @@ import {
   Send,
   ShieldCheck,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -46,6 +47,7 @@ type BusyAction =
   | "resolve"
   | "nonce"
   | "register"
+  | "wallet"
   | "update"
   | "roundtrip"
   | "explorer"
@@ -66,6 +68,16 @@ type ProofEnvelope = {
   credentialId?: string;
 };
 
+type EthereumProvider = {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+};
+
+declare global {
+  interface Window {
+    ethereum?: EthereumProvider;
+  }
+}
+
 const P256_N =
   0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
 
@@ -75,7 +87,8 @@ export function PassportDemo() {
   const [keyId, setKeyId] = useState("auth-1");
   const [didKey, setDidKey] = useState("");
   const [credentialId, setCredentialId] = useState("");
-  const [didLockPrivateKey, setDidLockPrivateKey] = useState("");
+  const [evmAccount, setEvmAccount] = useState("");
+  const [evmChainId, setEvmChainId] = useState("");
   const [feeRateShannonsPerKw, setFeeRateShannonsPerKw] = useState("1000");
   const [feePaidShannons, setFeePaidShannons] = useState("");
   const [txHash, setTxHash] = useState("");
@@ -129,7 +142,7 @@ export function PassportDemo() {
     {
       label: "Write DID",
       detail: "Submit update tx",
-      state: hasTxHash ? "pass" : resultState(results.update),
+      state: hasTxHash ? "pass" : didUpdateState(results.update),
     },
     {
       label: "Round Trip",
@@ -236,15 +249,32 @@ export function PassportDemo() {
 
   async function updateDid() {
     await run("update", async () => {
-      const body = await postJson("/api/did/update", {
+      const account = evmAccount || (await requestEvmWallet()).account;
+      const prepared = await postJson("/api/did/wallet-update/prepare", {
         did,
         keyId,
         didKey,
-        didLockPrivateKey,
+        evmAccount: account,
         feeRate: feeRateShannonsPerKw,
       });
+      setResults((current) => ({ ...current, update: prepared }));
+      if (!prepared.ok) {
+        return;
+      }
+
+      const challengeId = readString(prepared.challengeId);
+      const signingMessage = readString(prepared.signingMessage);
+      if (!challengeId || !signingMessage) {
+        throw new Error("Wallet signing challenge response is incomplete");
+      }
+
+      const signature = await signEvmMessage(account, signingMessage);
+      const body = await postJson("/api/did/wallet-update/submit", {
+        challengeId,
+        evmAccount: account,
+        signature,
+      });
       if (body.ok) {
-        setDidLockPrivateKey("");
         setTxHash(readString(body.txHash));
         setCapacityShannons(readString(body.capacityShannons));
         setFeeRateShannonsPerKw(
@@ -253,6 +283,21 @@ export function PassportDemo() {
         setFeePaidShannons(readString(body.feePaidShannons));
       }
       setResults((current) => ({ ...current, update: body }));
+    });
+  }
+
+  async function connectEvmWallet() {
+    await run("wallet", async () => {
+      const { account, chainId } = await requestEvmWallet();
+      setResults((current) => ({
+        ...current,
+        update: {
+          ok: true,
+          message: "EVM wallet connected",
+          evmAccount: account,
+          chainId,
+        },
+      }));
     });
   }
 
@@ -349,6 +394,31 @@ export function PassportDemo() {
     });
   }
 
+  async function requestEvmWallet(): Promise<{ account: string; chainId: string }> {
+    const provider = getEthereumProvider();
+    const accounts = await provider.request({ method: "eth_requestAccounts" });
+    const account = readFirstEvmAccount(accounts);
+    const chainId = await readEvmChainId(provider);
+    setEvmAccount(account);
+    setEvmChainId(chainId);
+    return { account, chainId };
+  }
+
+  async function signEvmMessage(
+    account: string,
+    signingMessage: string,
+  ): Promise<string> {
+    const provider = getEthereumProvider();
+    const signature = await provider.request({
+      method: "personal_sign",
+      params: [utf8ToHex(signingMessage), account],
+    });
+    if (typeof signature !== "string" || signature.trim().length === 0) {
+      throw new Error("EVM wallet did not return a signature");
+    }
+    return signature;
+  }
+
   async function copyValue(label: string, value: string) {
     if (!value) {
       return;
@@ -367,7 +437,7 @@ export function PassportDemo() {
       const target =
         action === "register"
           ? "passkey"
-          : action === "update"
+          : action === "update" || action === "wallet"
             ? "update"
             : action === "roundtrip"
               ? "roundtrip"
@@ -539,12 +609,20 @@ export function PassportDemo() {
             actions={
               <>
                 <ActionButton
+                  icon={<Wallet size={16} />}
+                  label="Connect Wallet"
+                  title="Connect EVM wallet"
+                  busy={busy === "wallet"}
+                  onClick={connectEvmWallet}
+                  variant="secondary"
+                />
+                <ActionButton
                   icon={<Send size={16} />}
-                  label="Submit Update"
-                  title="Submit DID update"
+                  label="Submit With Wallet"
+                  title="Submit DID update with EVM wallet"
                   busy={busy === "update"}
                   onClick={updateDid}
-                  disabled={!hasUsableDidKey}
+                  disabled={!hasUsableDidKey || !evmAccount}
                 />
                 <ActionButton
                   icon={<RefreshCw size={16} />}
@@ -559,16 +637,25 @@ export function PassportDemo() {
             }
           >
             <div className="field-grid two">
-              <SecretField
-                label="DID controller private key"
-                value={didLockPrivateKey}
-                onChange={setDidLockPrivateKey}
+              <ValueField
+                label="OmniLock EVM wallet"
+                value={evmAccount}
+                onCopy={() => copyValue("evmAccount", evmAccount)}
+                copied={copied === "evmAccount"}
               />
               <TextField
                 label="Fee rate shannons/KW"
                 value={feeRateShannonsPerKw}
                 onChange={setFeeRateShannonsPerKw}
                 mono
+              />
+            </div>
+            <div className="field-grid one">
+              <ValueField
+                label="EVM chain ID"
+                value={evmChainId}
+                onCopy={() => copyValue("evmChainId", evmChainId)}
+                copied={copied === "evmChainId"}
               />
             </div>
             <div className="field-grid two">
@@ -720,31 +807,6 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         spellCheck={false}
         autoComplete="off"
-      />
-    </label>
-  );
-}
-
-function SecretField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="text-label">
-      <span>{label}</span>
-      <input
-        className="mono"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        spellCheck={false}
-        autoComplete="off"
-        type="password"
-        placeholder="0x..."
       />
     </label>
   );
@@ -911,8 +973,54 @@ function resultState(value: JsonRecord): "idle" | "pass" | "blocked" {
   return "idle";
 }
 
+function didUpdateState(value: JsonRecord): "idle" | "pass" | "blocked" {
+  if (readString(value.txHash)) {
+    return "pass";
+  }
+  if (value.ok === true) {
+    return "idle";
+  }
+  return resultState(value);
+}
+
 function readString(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : "";
+}
+
+function getEthereumProvider(): EthereumProvider {
+  if (!window.ethereum) {
+    throw new Error("No injected EVM wallet was found in this browser");
+  }
+  return window.ethereum;
+}
+
+function readFirstEvmAccount(accounts: unknown): string {
+  if (!Array.isArray(accounts)) {
+    throw new Error("EVM wallet did not return an account list");
+  }
+  const account = accounts.find(
+    (value): value is string =>
+      typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value),
+  );
+  if (!account) {
+    throw new Error("EVM wallet returned no usable account");
+  }
+  return account;
+}
+
+async function readEvmChainId(provider: EthereumProvider): Promise<string> {
+  try {
+    const chainId = await provider.request({ method: "eth_chainId" });
+    return typeof chainId === "string" ? chainId : "";
+  } catch {
+    return "";
+  }
+}
+
+function utf8ToHex(value: string): string {
+  return `0x${Array.from(new TextEncoder().encode(value), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")}`;
 }
 
 async function sha256(value: string): Promise<ArrayBuffer> {
