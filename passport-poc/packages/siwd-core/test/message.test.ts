@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildSiwdMessage, type SiwdMessageFields } from "../src/index.js";
+import {
+  buildSiwdMessage,
+  parseSiwdMessage,
+  SiwdMessageParseError,
+  type SiwdMessageFields,
+} from "../src/index.js";
 
 describe("buildSiwdMessage", () => {
   it("builds the canonical SIWD message byte-for-byte", () => {
@@ -54,3 +59,70 @@ Expiration Time: 2026-09-02T10:05:00Z`,
   });
 });
 
+describe("parseSiwdMessage", () => {
+  const fields: SiwdMessageFields = {
+    domain: "app.example",
+    did: "did:ckb:qq2m72a2vas4e5ovcpxoedscguuu4nba",
+    statement: "Sign in to Passport.",
+    keyId: "auth-1",
+    uri: "https://app.example/login",
+    version: "1",
+    network: "ckb-testnet",
+    nonce: "8f3c1a94e2b7",
+    issuedAt: "2026-09-02T10:00:00Z",
+    expirationTime: "2026-09-02T10:05:00Z",
+  };
+
+  it("parses canonical builder output", () => {
+    expect(parseSiwdMessage(buildSiwdMessage(fields))).toEqual(fields);
+  });
+
+  it("rejects missing fields", () => {
+    expect(() =>
+      parseSiwdMessage(buildSiwdMessage(fields).replace("\nNonce:", "\n")),
+    ).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects duplicated fields", () => {
+    expect(() =>
+      parseSiwdMessage(`${buildSiwdMessage(fields)}\nNonce: replay`),
+    ).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects reordered fields", () => {
+    const message = buildSiwdMessage(fields)
+      .replace("URI: https://app.example/login\nVersion: 1", "Version: 1\nURI: https://app.example/login");
+
+    expect(() => parseSiwdMessage(message)).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects extra unknown fields", () => {
+    expect(() =>
+      parseSiwdMessage(buildSiwdMessage(fields).replace("Version: 1", "Audience: demo\nVersion: 1")),
+    ).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects statements with newlines", () => {
+    const message = buildSiwdMessage({
+      ...fields,
+      statement: "Sign in\nSecond line",
+    });
+
+    expect(() => parseSiwdMessage(message)).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects statements beginning with '-'", () => {
+    const message = buildSiwdMessage({
+      ...fields,
+      statement: "- Sign in",
+    });
+
+    expect(() => parseSiwdMessage(message)).toThrow(SiwdMessageParseError);
+  });
+
+  it("rejects CRLF line endings", () => {
+    expect(() =>
+      parseSiwdMessage(buildSiwdMessage(fields).replaceAll("\n", "\r\n")),
+    ).toThrow(SiwdMessageParseError);
+  });
+});

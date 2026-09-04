@@ -1,3 +1,11 @@
-export { buildSiwdMessage } from "./message.js";
-export type { SiwdMessageFields, SiwdNetwork } from "./message.js";
-
+export {
+  buildSiwdMessage,
+  parseSiwdMessage,
+  SiwdMessageParseError,
+} from "./message.js";
+export type {
+  ParsedSiwdMessageFields,
+  SiwdMessageFields,
+  SiwdMessageParseErrorCode,
+  SiwdNetwork,
+} from "./message.js";
