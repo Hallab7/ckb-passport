@@ -32,6 +32,12 @@ export type {
   WalletSiwdProofEnvelope,
   WebAuthnSiwdProofEnvelope,
 } from "./proof.js";
+export { generateSessionToken, InMemorySessionService } from "./session.js";
+export type {
+  IssuedPassportSession,
+  PassportSession,
+  SessionIssueOptions,
+} from "./session.js";
 export { buildDidTypeScript, resolveDidCell } from "./resolver.js";
 export type { DidCellResolution, ResolveDidCellOptions } from "./resolver.js";
 export { checkDidVerificationMethodRoundTrip } from "./round-trip.js";

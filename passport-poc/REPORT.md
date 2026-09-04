@@ -100,3 +100,9 @@ authenticator `rpIdHash`, requires the User Present bit, enforces low-S on the i
 signature, and verifies ES256 over the full `authenticatorData || SHA-256(clientDataJSON)` payload.
 Tests cover valid assertions, origin mismatch, challenge mismatch, User Present clear, wrong rpId
 hash, wrong curve, tampered client data, tampered authenticator data, and high-S rejection.
+
+## Session Issuing Status
+
+The verifier package now includes an in-memory demo session service. A successful verification can
+issue a random token whose server-side session stores only DID, key ID, issued time, and expiration
+time. Tests verify expiry, clearing, token format, and the absence of address or lock-script fields.
