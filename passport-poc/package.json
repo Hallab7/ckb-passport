@@ -15,7 +15,8 @@
     "test": "node scripts/test-workspaces.mjs",
     "update:did": "node scripts/update-did-method.mjs",
     "check:roundtrip": "node scripts/check-did-roundtrip.mjs",
-    "demo": "npm run dev -w @ckb-passport/demo"
+    "demo": "node scripts/run-demo.mjs",
+    "demo:check": "node scripts/run-demo.mjs --check"
   },
   "engines": {
     "node": ">=22"

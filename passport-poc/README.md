@@ -12,7 +12,13 @@ npm install
 npm test
 npm run audit:scaffold
 npm run probe:sdk
+npm run demo
 ```
+
+`npm run demo` is the one-command local startup path after dependencies are installed. It builds
+the workspace, then starts the relying-party demo on `CKB_PASSPORT_DEMO_PORT` or `3000`.
+Docker is not required for the PoC because nonce and session state are intentionally in memory and
+the app talks directly to the configured CKB testnet RPC.
 
 The live DID update gate is opt-in:
 
@@ -78,6 +84,8 @@ Defaults:
 | `CKB_RPC_URL` | `https://testnet.ckb.dev/` |
 | `CKB_INDEXER_URL` | `https://testnet.ckb.dev/indexer` |
 | `SIWD_EXPECTED_ORIGIN` | `http://localhost:3000` |
+| `CKB_PASSPORT_DEMO_PORT` | `3000` |
+| `CKB_PASSPORT_ENABLE_DID_UPDATE` | `0` |
 
 `CKB_DID_CODE_HASH` and `CKB_DID_HASH_TYPE` default to CCC's testnet
 `KnownScript.DidCkb` values:
