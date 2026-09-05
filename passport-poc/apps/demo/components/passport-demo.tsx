@@ -519,7 +519,6 @@ export function PassportDemo() {
           <a href="#register">Register</a>
           <a href="#update">Update</a>
           <a href="#signin">Sign In</a>
-          {/* <a href="#trust">Trust</a> */}
         </nav>
         <div className="nav-actions">
           <div className="nav-action-row">
@@ -818,19 +817,6 @@ export function PassportDemo() {
       </section>
       </section>
 
-      <section className="trust-section" id="trust">
-        <div>
-          <span className="section-heading">Trust Section</span>
-          <h2>Proof boundaries</h2>
-        </div>
-        <div className="trust-grid">
-          <TrustItem label="Network" value={config?.network ?? "loading"} />
-          <TrustItem label="Credential" value="WebAuthn P-256" />
-          <TrustItem label="DID update" value={config?.didUpdateInput ?? "loading"} />
-          <TrustItem label="Replay guard" value={replayStateLabel} />
-        </div>
-      </section>
-
       {/* <footer className="site-footer">
         <span>CKB Passport PoC</span>
         <span>{did}</span>
@@ -842,15 +828,6 @@ export function PassportDemo() {
 function SnapshotItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="snapshot-item">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function TrustItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="trust-item">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
