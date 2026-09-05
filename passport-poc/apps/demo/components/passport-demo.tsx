@@ -2,12 +2,10 @@
 
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   Clipboard,
   ExternalLink,
   Fingerprint,
-  History,
   KeyRound,
   Link2,
   Loader2,
@@ -156,7 +154,6 @@ export function PassportDemo() {
     capacityShannons ||
     readString(results.update.capacityShannons) ||
     readString(results.resolver.capacityShannons);
-  const authenticated = results.session.authenticated === true;
   const hasLocalDidKey = didKey.startsWith("did:key:zDna");
   const hasUsableDidKey = displayDidKey.startsWith("did:key:zDna");
   const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(displayTxHash);
@@ -172,57 +169,6 @@ export function PassportDemo() {
   const capacityCkb = displayCapacityShannons
     ? `${formatCkb(displayCapacityShannons)} CKB`
     : "Pending";
-
-  const steps = [
-    {
-      label: "Resolve DID",
-      detail: "Live testnet cell",
-      state: resultState(results.resolver),
-    },
-    {
-      label: "Register Passkey",
-      detail: "Create did:key",
-      state: hasLocalDidKey ? "pass" : resultState(results.passkey),
-    },
-    {
-      label: "Write DID",
-      detail: "Submit update tx",
-      state: hasTxHash ? "pass" : didUpdateState(results.update),
-    },
-    {
-      label: "Round Trip",
-      detail: "Read auth-1 back",
-      state: resultState(results.roundtrip),
-    },
-    {
-      label: "Explorer",
-      detail: "Evidence link",
-      state: explorerUrl ? "pass" : resultState(results.explorer),
-    },
-    {
-      label: "Sign In",
-      detail: "Passkey proof",
-      state: resultState(results.verify),
-    },
-    {
-      label: "Replay Check",
-      detail: "Nonce consumed",
-      state: replayRejected ? "pass" : "idle",
-    },
-  ];
-  const completedStepCount = steps.filter((step) => step.state === "pass").length;
-  const nextAction = getNextAction({
-    domainReady,
-    resolved: hasResolvedDid,
-    didKeyReady: hasLocalDidKey,
-    walletReady: Boolean(evmAccount),
-    txReady: hasTxHash,
-    roundTripReady: results.roundtrip.ok === true,
-    explorerReady: Boolean(explorerUrl),
-    nonceReady: Boolean(message),
-    signedIn: results.verify.ok === true,
-    replayChecked: replayRejected,
-  });
 
   async function loadConfig() {
     await run("config", async () => {
@@ -562,7 +508,7 @@ export function PassportDemo() {
       </section> */}
 
       <header className="top-nav">
-        <a className="nav-brand" href="#identity">
+        <a className="nav-brand" href="#resolve">
           <span className="brand-mark">
             <ShieldCheck size={20} aria-hidden="true" />
           </span>
@@ -615,25 +561,6 @@ export function PassportDemo() {
             Paste a DID, publish auth-1, and verify the passkey session from
             one browser console.
           </p>
-          {/* <div className="hero-ctas">
-            <ActionButton
-              icon={<Link2 size={16} />}
-              label="Resolve DID"
-              title="Resolve DID"
-              busy={busy === "resolve"}
-              onClick={resolveDid}
-              disabled={!hasDidInput}
-            />
-            <ActionButton
-              icon={<Fingerprint size={16} />}
-              label="Register"
-              title="Register passkey"
-              busy={busy === "register"}
-              onClick={registerPasskey}
-              disabled={!domainReady || !hasResolvedDid}
-              variant="secondary"
-            />
-          </div> */}
         </div>
 
         <aside className="market-snapshot" aria-label="Live DID snapshot">
@@ -654,125 +581,14 @@ export function PassportDemo() {
             <SnapshotItem label="Update" value={updateStateLabel} />
             <SnapshotItem label="Replay" value={replayStateLabel} />
           </div>
-          {/* <div className="signal-chart" aria-hidden="true">
-            <span style={{ height: "32%" }} />
-            <span style={{ height: "64%" }} />
-            <span style={{ height: "46%" }} />
-            <span style={{ height: "78%" }} />
-            <span style={{ height: "58%" }} />
-            <span style={{ height: "88%" }} />
-            <span style={{ height: "70%" }} />
-            <span style={{ height: "100%" }} />
-          </div> */}
         </aside>
       </section>
 
-      {/* <section className="metrics-strip" aria-label="Live metrics">
-        <MetricTile label="DID State" value={didStateLabel} />
-        <MetricTile label="Auth Key" value={authKeyLabel} />
-        <MetricTile label="Update Tx" value={displayTxHash ? shortenMiddle(displayTxHash, 6, 6) : "Pending"} />
-        <MetricTile label="Replay" value={replayStateLabel} />
-      </section> */}
-
-      {/* <section className="feature-editorial">
-        <div>
-          <span className="section-heading">Feature Editorial</span>
-          <h2>Every proof value is visible before the next action.</h2>
-        </div>
-        <div className="editorial-copy">
-          <DataRow
-            label="Current task"
-            value={nextAction}
-          />
-          <DataRow
-            label="Verified path"
-            value="DID cell, auth-1 key, nonce, passkey signature, replay guard"
-          />
-          <DataRow
-            label="Network"
-            value={config?.network ?? "loading"}
-          />
-        </div>
-      </section> */}
-
       <section className="product-showcase" id="product">
-        {/* <div className="showcase-head">
-          <div>
-            <span className="section-heading">Product Showcase</span>
-            <h2>Live relying-party console</h2>
-          </div>
-          <StatusBadge
-            label={`${completedStepCount}/${steps.length} complete`}
-            state={completedStepCount === steps.length ? "pass" : "idle"}
-          />
-        </div> */}
-
         <section className="dashboard-layout">
           <section className="main-stack">
-          <article className="identity-card" id="identity">
-            <div className="card-head">
-              <div>
-                <span className="eyebrow">CKB / DID Passport / Testnet</span>
-                <h2>Identity snapshot</h2>
-              </div>
-              <StatusBadge
-                label={results.resolver.ok === true ? "live" : "unresolved"}
-                state={resultState(results.resolver)}
-              />
-            </div>
-
-            <div className="identifier-panel">
-              <div className="identifier-mark">CKB</div>
-              <div className="identifier-content">
-                <span>Your identifier</span>
-                <strong>{did || "Not set"}</strong>
-                <small>
-                  {displayTxHash
-                    ? `TX ${shortenMiddle(displayTxHash).toUpperCase()} / CAPACITY ${formatCkb(displayCapacityShannons)} CKB`
-                    : `RP ${config?.rpId ?? "loading"} / ${config?.network ?? "testnet"}`}
-                </small>
-              </div>
-            </div>
-
-            <div className="identity-actions">
-              {/* <ActionButton
-                icon={<Clipboard size={16} />}
-                label="Copy DID"
-                title="Copy DID"
-                busy={false}
-                onClick={() => copyValue("did", did)}
-                variant="secondary"
-              /> */}
-              {explorerUrl ? (
-                <a className="link-button" href={explorerUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink size={16} aria-hidden="true" />
-                  Explorer
-                </a>
-              ) : null}
-            </div>
-
-            <div className="data-grid">
-              <DataRow label="Key ID" value={keyId} mono />
-              <DataRow
-                label="Current auth-1"
-                value={resolvedDidKey || "pending"}
-                mono
-              />
-              <DataRow
-                label="Wallet"
-                value={evmAccount || "not connected"}
-                mono={Boolean(evmAccount)}
-              />
-              <DataRow
-                label="Update transaction"
-                value={displayTxHash || "pending"}
-                mono={Boolean(displayTxHash)}
-              />
-            </div>
-          </article>
-
-          <section className="operations">
-            <div className="section-heading">Workflow / Live Check</div>
+            <section className="operations">
+              <div className="section-heading">Workflow / Live Check</div>
 
             <div id="resolve">
               <Panel
@@ -999,76 +815,6 @@ export function PassportDemo() {
             </div>
           </section>
         </section>
-
-        <aside className="side-stack" aria-label="Demo status">
-          <section className="run-order" aria-label="Run order">
-            <div className="section-heading">Run Order</div>
-            <ol>
-              {steps.map((step, index) => (
-                <li key={step.label} className={`step-row ${step.state}`}>
-                  <span className="step-index">{index + 1}</span>
-                  <span>
-                    <strong>{step.label}</strong>
-                    <small>{step.detail}</small>
-                  </span>
-                  {step.state === "idle" ? (
-                    <ArrowRight size={15} aria-hidden="true" />
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section className="activity-card">
-            <div className="card-head compact">
-              <div>
-                <span className="eyebrow">Section / Activity</span>
-                <h2>Operation history</h2>
-              </div>
-              <History size={18} aria-hidden="true" />
-            </div>
-            <ActivityRow
-              label="Resolve"
-              detail={results.resolver.ok === true ? "DID loaded" : "Awaiting resolve"}
-              state={resultState(results.resolver)}
-            />
-            <ActivityRow
-              label="Update"
-              detail={displayTxHash ? shortenMiddle(displayTxHash) : "No transaction yet"}
-              state={hasTxHash ? "pass" : didUpdateState(results.update)}
-            />
-            <ActivityRow
-              label="Round trip"
-              detail={results.roundtrip.ok === true ? "auth-1 matched" : "Not checked"}
-              state={resultState(results.roundtrip)}
-            />
-            <ActivityRow
-              label="Sign in"
-              detail={authenticated ? "DID-only session active" : "No active session"}
-              state={authenticated ? "pass" : resultState(results.verify)}
-            />
-          </section>
-
-          <section className="evidence-ledger">
-            <div className="section-heading">Evidence Values</div>
-            <div className="ledger-grid">
-              <LedgerItem label="CKB_PASSPORT_LIVE_DID" value={did} />
-              <LedgerItem label="CKB_PASSPORT_AUTH_KEY_ID" value={keyId} />
-              <LedgerItem
-                label="CKB_PASSPORT_AUTH_DID_KEY"
-                value={displayDidKey || "pending"}
-              />
-              <LedgerItem
-                label="CKB_PASSPORT_UPDATE_TX_HASH"
-                value={displayTxHash || "pending"}
-              />
-              <LedgerItem
-                label="CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS"
-                value={displayCapacityShannons || "optional"}
-              />
-            </div>
-          </section>
-        </aside>
       </section>
       </section>
 
@@ -1093,15 +839,6 @@ export function PassportDemo() {
   );
 }
 
-function MetricTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metric-tile">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
 function SnapshotItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="snapshot-item">
@@ -1116,43 +853,6 @@ function TrustItem({ label, value }: { label: string; value: string }) {
     <div className="trust-item">
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function DataRow({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="data-row">
-      <span>{label}</span>
-      <strong className={mono ? "mono" : undefined}>{value}</strong>
-    </div>
-  );
-}
-
-function ActivityRow({
-  label,
-  detail,
-  state,
-}: {
-  label: string;
-  detail: string;
-  state: "idle" | "pass" | "blocked";
-}) {
-  return (
-    <div className={`activity-row ${state}`}>
-      <span className="activity-dot" />
-      <div>
-        <strong>{label}</strong>
-        <small>{detail}</small>
-      </div>
     </div>
   );
 }
@@ -1292,16 +992,6 @@ function ResultBlock({ title, value }: { title: string; value: JsonRecord }) {
   );
 }
 
-function LedgerItem({ label, value }: { label: string; value: string }) {
-  const isPending = value === "pending";
-  return (
-    <div className={`ledger-item ${isPending ? "pending" : ""}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
 function StatusBadge({
   label,
   state,
@@ -1372,72 +1062,6 @@ function resultState(value: JsonRecord): "idle" | "pass" | "blocked" {
     return "blocked";
   }
   return "idle";
-}
-
-function didUpdateState(value: JsonRecord): "idle" | "pass" | "blocked" {
-  if (readString(value.txHash)) {
-    return "pass";
-  }
-  if (value.ok === true) {
-    return "idle";
-  }
-  return resultState(value);
-}
-
-function getNextAction({
-  domainReady,
-  resolved,
-  didKeyReady,
-  walletReady,
-  txReady,
-  roundTripReady,
-  explorerReady,
-  nonceReady,
-  signedIn,
-  replayChecked,
-}: {
-  domainReady: boolean;
-  resolved: boolean;
-  didKeyReady: boolean;
-  walletReady: boolean;
-  txReady: boolean;
-  roundTripReady: boolean;
-  explorerReady: boolean;
-  nonceReady: boolean;
-  signedIn: boolean;
-  replayChecked: boolean;
-}): string {
-  if (!domainReady) {
-    return "Open origin";
-  }
-  if (!resolved) {
-    return "Resolve DID";
-  }
-  if (!didKeyReady) {
-    return "Register key";
-  }
-  if (!walletReady) {
-    return "Connect wallet";
-  }
-  if (!txReady) {
-    return "Submit update";
-  }
-  if (!roundTripReady) {
-    return "Round trip";
-  }
-  if (!explorerReady) {
-    return "Build evidence";
-  }
-  if (!nonceReady) {
-    return "Request nonce";
-  }
-  if (!signedIn) {
-    return "Sign in";
-  }
-  if (!replayChecked) {
-    return "Replay proof";
-  }
-  return "Complete";
 }
 
 function readString(value: JsonValue | undefined): string {
