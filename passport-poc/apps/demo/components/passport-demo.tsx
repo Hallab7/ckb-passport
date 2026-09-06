@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  clearSoftwareAuthKey,
+  DEFAULT_SOFTWARE_AUTH_KEY_STORAGE_KEY,
+  generateSoftwareAuthKey,
+  loadSoftwareAuthKey,
+  signInWithPasskey as createPasskeyProof,
+  signInWithSoftwareKey,
+  type SoftwareProofEnvelope,
+  type WebAuthnProofEnvelope,
+} from "@ckb-passport/siwd-browser";
+import {
   AlertTriangle,
   CheckCircle2,
   Clipboard,
@@ -45,6 +55,7 @@ type BusyAction =
   | "resolve"
   | "nonce"
   | "register"
+  | "software"
   | "wallet"
   | "update"
   | "roundtrip"
@@ -53,22 +64,8 @@ type BusyAction =
   | "replay"
   | "session"
   | "clear";
-type ControlStatus = {
-  label: string;
-  state: "idle" | "pass" | "blocked";
-};
 
-type ProofEnvelope = {
-  v: 1;
-  did: string;
-  keyId: string;
-  message: string;
-  mode: "webauthn";
-  signature: string;
-  clientDataJSON: string;
-  authenticatorData: string;
-  credentialId?: string;
-};
+type ProofEnvelope = WebAuthnProofEnvelope | SoftwareProofEnvelope;
 
 type EthereumProvider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -80,8 +77,6 @@ declare global {
   }
 }
 
-const P256_N =
-  0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
 const INITIAL_KEY_ID = "auth-1";
 const INITIAL_FEE_RATE_SHANNONS_PER_KW = "1000";
 
@@ -105,6 +100,10 @@ export function PassportDemo() {
   const [keyId, setKeyId] = useState(INITIAL_KEY_ID);
   const [didKey, setDidKey] = useState("");
   const [credentialId, setCredentialId] = useState("");
+  const [authMethod, setAuthMethod] = useState<"webauthn" | "software">(
+    "webauthn",
+  );
+  const [softwareKeyReady, setSoftwareKeyReady] = useState(false);
   const [evmAccount, setEvmAccount] = useState("");
   const [evmChainId, setEvmChainId] = useState("");
   const [feeRateShannonsPerKw, setFeeRateShannonsPerKw] = useState(
@@ -118,10 +117,6 @@ export function PassportDemo() {
   const [browserOrigin, setBrowserOrigin] = useState("");
   const [busy, setBusy] = useState<BusyAction | null>(null);
   const [copied, setCopied] = useState("");
-  const [controlStatus, setControlStatus] = useState<ControlStatus>({
-    label: "Ready",
-    state: "idle",
-  });
   const [results, setResults] = useState<Record<string, JsonRecord>>(initialResults);
 
   useEffect(() => {
@@ -140,6 +135,7 @@ export function PassportDemo() {
   const expectedOriginUrl = config?.expectedOrigin ?? "http://localhost:3000";
   const trimmedDid = did.trim();
   const hasDidInput = trimmedDid.length > 0;
+  const softwareStorageKey = `${DEFAULT_SOFTWARE_AUTH_KEY_STORAGE_KEY}:${trimmedDid || "pending"}:${keyId}`;
   const resolverMethods = readRecord(results.resolver.verificationMethods);
   const resolvedDidKey = resolverMethods ? readString(resolverMethods[keyId]) : "";
   const resolvedDid = readString(results.resolver.did);
@@ -149,6 +145,10 @@ export function PassportDemo() {
   const updateTxHash = readString(results.update.txHash);
   const evidenceTxHash = readString(results.explorer.updateTransactionHash);
   const displayDidKey = didKey || resolvedDidKey;
+  const credentialDisplay =
+    authMethod === "software" && softwareKeyReady
+      ? "software key in IndexedDB"
+      : credentialId;
   const displayTxHash = txHash || updateTxHash || evidenceTxHash;
   const displayCapacityShannons =
     capacityShannons ||
@@ -157,18 +157,34 @@ export function PassportDemo() {
   const hasLocalDidKey = didKey.startsWith("did:key:zDna");
   const hasUsableDidKey = displayDidKey.startsWith("did:key:zDna");
   const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(displayTxHash);
-  const replayRejected = readString(results.verify.code) === "nonce_consumed";
-  const didStateLabel = results.resolver.ok === true ? "Live" : "Unresolved";
-  const authKeyLabel = resolvedDidKey
-    ? "On-chain"
-    : hasLocalDidKey
-      ? "Local"
-      : "Pending";
-  const updateStateLabel = hasTxHash ? "Committed" : "Pending";
-  const replayStateLabel = replayRejected ? "Rejected" : "Unchecked";
-  const capacityCkb = displayCapacityShannons
-    ? `${formatCkb(displayCapacityShannons)} CKB`
-    : "Pending";
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!hasDidInput) {
+      setSoftwareKeyReady(false);
+      return;
+    }
+
+    void loadSoftwareAuthKey({ storageKey: softwareStorageKey })
+      .then((state) => {
+        if (cancelled) {
+          return;
+        }
+        setSoftwareKeyReady(Boolean(state));
+        if (state?.didKey && authMethod === "software") {
+          setDidKey(state.didKey);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSoftwareKeyReady(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authMethod, hasDidInput, softwareStorageKey]);
 
   async function loadConfig() {
     await run("config", async () => {
@@ -202,11 +218,15 @@ export function PassportDemo() {
     });
   }
 
+  async function requestAuthNonce(): Promise<JsonRecord> {
+    return getJson(
+      `/api/nonce?did=${encodeURIComponent(trimmedDid)}&keyId=${encodeURIComponent(keyId)}`,
+    );
+  }
+
   async function requestNonce() {
     await run("nonce", async () => {
-      const body = await getJson(
-        `/api/nonce?did=${encodeURIComponent(did)}&keyId=${encodeURIComponent(keyId)}`,
-      );
+      const body = await requestAuthNonce();
       setResults((current) => ({ ...current, nonce: body }));
       const nextMessage = readString(body.message);
       if (nextMessage) {
@@ -253,11 +273,124 @@ export function PassportDemo() {
       );
       const converted = await postJson("/api/passkey/did-key", { attestationObject });
       const nextDidKey = readString(converted.didKey);
-      if (converted.ok && nextDidKey) {
-        setCredentialId(bytesToBase64Url(new Uint8Array(credential.rawId)));
-        setDidKey(nextDidKey);
+      if (!converted.ok || !nextDidKey) {
+        setResults((current) => ({ ...current, passkey: converted }));
+        return;
       }
-      setResults((current) => ({ ...current, passkey: converted }));
+
+      const rawCredentialId = new Uint8Array(credential.rawId);
+      const nonceBody = await requestAuthNonce();
+      const proofMessage = readString(nonceBody.message);
+      if (!proofMessage) {
+        throw new Error("Server did not return a proof-of-possession message");
+      }
+
+      const proof = await createPasskeyProof({
+        did: trimmedDid,
+        keyId,
+        message: proofMessage,
+        rpId: config.rpId,
+        credentialId: rawCredentialId,
+      });
+      const proofOfPossession = await postJson(
+        "/api/auth-key/proof-of-possession",
+        {
+          did: trimmedDid,
+          keyId,
+          didKey: nextDidKey,
+          proof,
+        },
+      );
+      if (!proofOfPossession.ok) {
+        setResults((current) => ({
+          ...current,
+          nonce: nonceBody,
+          passkey: {
+            ...converted,
+            ok: false,
+            proofOfPossession,
+          },
+        }));
+        return;
+      }
+
+      setAuthMethod("webauthn");
+      setSoftwareKeyReady(false);
+      setCredentialId(bytesToBase64Url(rawCredentialId));
+      setDidKey(nextDidKey);
+      setMessage("");
+      setResults((current) => ({
+        ...current,
+        nonce: nonceBody,
+        passkey: {
+          ...converted,
+          proofOfPossession,
+        },
+      }));
+    });
+  }
+
+  async function generateSoftwareKey() {
+    if (!hasResolvedDid) {
+      return;
+    }
+    await run("software", async () => {
+      const generated = await generateSoftwareAuthKey({
+        storageKey: softwareStorageKey,
+      });
+      const nonceBody = await requestAuthNonce();
+      const proofMessage = readString(nonceBody.message);
+      if (!proofMessage) {
+        throw new Error("Server did not return a proof-of-possession message");
+      }
+
+      const proof = await signInWithSoftwareKey({
+        did: trimmedDid,
+        keyId,
+        message: proofMessage,
+        storageKey: softwareStorageKey,
+      });
+      const proofOfPossession = await postJson(
+        "/api/auth-key/proof-of-possession",
+        {
+          did: trimmedDid,
+          keyId,
+          didKey: generated.didKey,
+          proof,
+        },
+      );
+      if (!proofOfPossession.ok) {
+        await clearSoftwareAuthKey({ storageKey: softwareStorageKey }).catch(
+          () => undefined,
+        );
+        setResults((current) => ({
+          ...current,
+          nonce: nonceBody,
+          passkey: {
+            ok: false,
+            didKey: generated.didKey,
+            mode: "software",
+            proofOfPossession,
+          },
+        }));
+        return;
+      }
+
+      setAuthMethod("software");
+      setSoftwareKeyReady(true);
+      setCredentialId("");
+      setDidKey(generated.didKey);
+      setMessage("");
+      setResults((current) => ({
+        ...current,
+        nonce: nonceBody,
+        passkey: {
+          ok: true,
+          mode: "software",
+          didKey: generated.didKey,
+          proofOfPossession,
+        },
+      }));
     });
   }
 
@@ -279,7 +412,7 @@ export function PassportDemo() {
       const challengeId = readString(prepared.challengeId);
       const signingMessage = readString(prepared.signingMessage);
       if (!challengeId || !signingMessage) {
-        throw new Error("Wallet signing challenge response is incomplete");
+        throw new Error("Controller signing challenge response is incomplete");
       }
 
       const signature = await signEvmMessage(account, signingMessage);
@@ -307,7 +440,7 @@ export function PassportDemo() {
         ...current,
         update: {
           ok: true,
-          message: "EVM wallet connected",
+          message: "DID controller wallet connected",
           evmAccount: account,
           chainId,
         },
@@ -339,50 +472,38 @@ export function PassportDemo() {
     });
   }
 
-  async function signInWithPasskey() {
+  async function signInWithAuthKey() {
     await run("signin", async () => {
-      requireWebAuthn(config, domainReady);
       if (!message) {
         throw new Error("Request a nonce before signing in");
       }
-      const requestOptions: PublicKeyCredentialRequestOptions = {
-        challenge: await sha256(message),
-        rpId: config.rpId,
-        userVerification: "preferred",
-      };
-      if (credentialId) {
-        requestOptions.allowCredentials = [
-          {
-            type: "public-key",
-            id: base64UrlToBuffer(credentialId),
-          },
-        ];
-      }
 
-      const credential = (await navigator.credentials.get({
-        publicKey: requestOptions,
-      })) as PublicKeyCredential | null;
-      if (!credential || credential.type !== "public-key") {
-        throw new Error("Passkey assertion returned no public-key credential");
-      }
-
-      const response = credential.response as AuthenticatorAssertionResponse;
-      const rawSignature = derEcdsaSignatureToRaw(new Uint8Array(response.signature));
-      const proof: ProofEnvelope = {
-        v: 1,
-        did,
-        keyId,
-        message,
-        mode: "webauthn",
-        signature: bytesToBase64Url(normalizeRawSignature(rawSignature, P256_N)),
-        clientDataJSON: bytesToBase64Url(new Uint8Array(response.clientDataJSON)),
-        authenticatorData: bytesToBase64Url(new Uint8Array(response.authenticatorData)),
-        credentialId: credential.id,
-      };
+      const proof: ProofEnvelope =
+        authMethod === "software"
+          ? await signInWithSoftwareKey({
+              did: trimmedDid,
+              keyId,
+              message,
+              storageKey: softwareStorageKey,
+            })
+          : await signInWithWebAuthn();
       setLastProof(proof);
       const body = await postJson("/api/verify", { proof });
       setResults((current) => ({ ...current, verify: body }));
       await refreshSession();
+    });
+  }
+
+  async function signInWithWebAuthn(): Promise<WebAuthnProofEnvelope> {
+    requireWebAuthn(config, domainReady);
+    return createPasskeyProof({
+      did: trimmedDid,
+      keyId,
+      message,
+      rpId: config.rpId,
+      credentialId: credentialId
+        ? new Uint8Array(base64UrlToBuffer(credentialId))
+        : undefined,
     });
   }
 
@@ -405,8 +526,10 @@ export function PassportDemo() {
   }
 
   async function clearCurrentSession() {
+    const keyToClear = softwareStorageKey;
     await run("clear", async () => {
-      const body = await postJson("/api/session/clear", {});
+      await postJson("/api/session/clear", {});
+      await clearSoftwareAuthKey({ storageKey: keyToClear }).catch(() => undefined);
       resetDemoState();
     });
   }
@@ -416,6 +539,8 @@ export function PassportDemo() {
     setKeyId(config?.defaultKeyId || INITIAL_KEY_ID);
     setDidKey("");
     setCredentialId("");
+    setAuthMethod("webauthn");
+    setSoftwareKeyReady(false);
     setEvmAccount("");
     setEvmChainId("");
     setFeeRateShannonsPerKw(
@@ -471,7 +596,7 @@ export function PassportDemo() {
     } catch (error) {
       const body = normalizeError(error);
       const target =
-        action === "register"
+        action === "register" || action === "software"
           ? "passkey"
           : action === "update" || action === "wallet"
             ? "update"
@@ -489,10 +614,6 @@ export function PassportDemo() {
       setResults((current) => ({ ...current, [target]: body }));
       if (action === "clear") {
         resetDemoState();
-        setControlStatus({
-          label: `Clear failed: ${readString(body.message) || "Unknown error"}`,
-          state: "blocked",
-        });
       }
     } finally {
       setBusy((current) => (current === action ? null : current));
@@ -501,12 +622,6 @@ export function PassportDemo() {
 
   return (
     <main className="app-shell">
-      {/* <section className="announcement-bar" aria-label="Demo environment">
-        <span>Live testnet</span>
-        <strong>{shortenMiddle(did, 18, 12)}</strong>
-        <span>{config?.didUpdateInput ?? "loading"}</span>
-      </section> */}
-
       <header className="top-nav">
         <a className="nav-brand" href="#resolve">
           <span className="brand-mark">
@@ -531,9 +646,6 @@ export function PassportDemo() {
               variant="danger"
             />
           </div>
-          {/* <span className={`control-status ${controlStatus.state}`} aria-live="polite">
-            {controlStatus.label}
-          </span> */}
         </div>
       </header>
 
@@ -557,30 +669,10 @@ export function PassportDemo() {
             <span>wallet sign-in.</span>
           </h1>
           <p className="hero-description">
-            Paste a DID, publish auth-1, and verify the passkey session from
+            Paste a DID, publish auth-1, and verify the auth-key session from
             one browser console.
           </p>
         </div>
-
-        <aside className="market-snapshot" aria-label="Live DID snapshot">
-          <div className="snapshot-head">
-            <span>Live Snapshot</span>
-            <StatusBadge
-              label={results.resolver.ok === true ? "live" : "pending"}
-              state={resultState(results.resolver)}
-            />
-          </div>
-          <div className="snapshot-balance">
-            <span>Remaining capacity</span>
-            <strong>{capacityCkb}</strong>
-          </div>
-          <div className="snapshot-grid">
-            <SnapshotItem label="DID state" value={didStateLabel} />
-            <SnapshotItem label="Auth key" value={authKeyLabel} />
-            <SnapshotItem label="Update" value={updateStateLabel} />
-            <SnapshotItem label="Replay" value={replayStateLabel} />
-          </div>
-        </aside>
       </section>
 
       <section className="product-showcase" id="product">
@@ -626,28 +718,39 @@ export function PassportDemo() {
             <div id="register">
               <Panel
                 eyebrow="Registration"
-                title="Create passkey DID key"
+                title="Create auth DID key"
                 result={results.passkey}
                 actions={
-                  <ActionButton
-                    icon={<Fingerprint size={16} />}
-                    label="Register Passkey"
-                    title="Register passkey"
-                    busy={busy === "register"}
-                    onClick={registerPasskey}
-                    disabled={!domainReady || !hasResolvedDid}
-                  />
+                  <>
+                    <ActionButton
+                      icon={<Fingerprint size={16} />}
+                      label="Passkey"
+                      title="Register passkey"
+                      busy={busy === "register"}
+                      onClick={registerPasskey}
+                      disabled={!domainReady || !hasResolvedDid}
+                    />
+                    <ActionButton
+                      icon={<KeyRound size={16} />}
+                      label="Software Key"
+                      title="Generate software auth key"
+                      busy={busy === "software"}
+                      onClick={generateSoftwareKey}
+                      disabled={!hasResolvedDid}
+                      variant="secondary"
+                    />
+                  </>
                 }
               >
                 <div className="field-grid two">
                   <ValueField
-                    label="Credential ID"
-                    value={credentialId}
-                    onCopy={() => copyValue("credential", credentialId)}
+                    label="Credential"
+                    value={credentialDisplay}
+                    onCopy={() => copyValue("credential", credentialDisplay)}
                     copied={copied === "credential"}
                   />
                   <ValueField
-                    label="Passkey did:key"
+                    label="Auth did:key"
                     value={didKey}
                     onCopy={() => copyValue("didKey", didKey)}
                     copied={copied === "didKey"}
@@ -665,8 +768,8 @@ export function PassportDemo() {
                   <>
                     <ActionButton
                       icon={<Wallet size={16} />}
-                      label="Connect Wallet"
-                      title="Connect EVM wallet"
+                      label="Controller"
+                      title="Connect DID controller EVM wallet"
                       busy={busy === "wallet"}
                       onClick={connectEvmWallet}
                       variant="secondary"
@@ -674,7 +777,7 @@ export function PassportDemo() {
                     <ActionButton
                       icon={<Send size={16} />}
                       label="Submit"
-                      title="Submit DID update with EVM wallet"
+                      title="Submit DID update with controller wallet"
                       busy={busy === "update"}
                       onClick={updateDid}
                       disabled={!hasLocalDidKey || !evmAccount}
@@ -684,7 +787,7 @@ export function PassportDemo() {
               >
                 <div className="field-grid two">
                   <ValueField
-                    label="EVM wallet"
+                    label="Controller account"
                     value={evmAccount}
                     onCopy={() => copyValue("evmAccount", evmAccount)}
                     copied={copied === "evmAccount"}
@@ -698,7 +801,7 @@ export function PassportDemo() {
                 </div>
                 <div className="field-grid one">
                   <ValueField
-                    label="EVM chain ID"
+                    label="Controller chain ID"
                     value={evmChainId}
                     onCopy={() => copyValue("evmChainId", evmChainId)}
                     copied={copied === "evmChainId"}
@@ -782,15 +885,27 @@ export function PassportDemo() {
                       title="Request nonce"
                       busy={busy === "nonce"}
                       onClick={requestNonce}
+                      disabled={!hasDidInput}
                       variant="secondary"
                     />
                     <ActionButton
-                      icon={<Fingerprint size={16} />}
+                      icon={
+                        authMethod === "software" ? (
+                          <KeyRound size={16} />
+                        ) : (
+                          <Fingerprint size={16} />
+                        )
+                      }
                       label="Sign In"
-                      title="Sign in with passkey"
+                      title={`Sign in with ${authMethod === "software" ? "software key" : "passkey"}`}
                       busy={busy === "signin"}
-                      onClick={signInWithPasskey}
-                      disabled={!domainReady || !message || !hasUsableDidKey}
+                      onClick={signInWithAuthKey}
+                      disabled={
+                        !message ||
+                        !hasUsableDidKey ||
+                        (authMethod === "webauthn" && !domainReady) ||
+                        (authMethod === "software" && !softwareKeyReady)
+                      }
                     />
                     <ActionButton
                       icon={<RotateCcw size={16} />}
@@ -804,6 +919,23 @@ export function PassportDemo() {
                   </>
                 }
               >
+                <div className="segmented-control" role="group" aria-label="Auth method">
+                  <button
+                    type="button"
+                    className={authMethod === "webauthn" ? "active" : undefined}
+                    onClick={() => setAuthMethod("webauthn")}
+                  >
+                    Passkey
+                  </button>
+                  <button
+                    type="button"
+                    className={authMethod === "software" ? "active" : undefined}
+                    onClick={() => setAuthMethod("software")}
+                    disabled={!softwareKeyReady}
+                  >
+                    Software Key
+                  </button>
+                </div>
                 <label className="text-label">
                   <span>Canonical SIWD Message</span>
                   <textarea value={message} readOnly spellCheck={false} rows={9} />
@@ -816,21 +948,7 @@ export function PassportDemo() {
         </section>
       </section>
       </section>
-
-      {/* <footer className="site-footer">
-        <span>CKB Passport PoC</span>
-        <span>{did}</span>
-      </footer> */}
     </main>
-  );
-}
-
-function SnapshotItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="snapshot-item">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
   );
 }
 
@@ -969,16 +1087,6 @@ function ResultBlock({ title, value }: { title: string; value: JsonRecord }) {
   );
 }
 
-function StatusBadge({
-  label,
-  state,
-}: {
-  label: string;
-  state: "idle" | "pass" | "blocked";
-}) {
-  return <span className={`status-badge ${state}`}>{label}</span>;
-}
-
 async function getJson(path: string): Promise<JsonRecord> {
   const response = await fetch(path);
   return parseApiResponse(response);
@@ -1031,16 +1139,6 @@ function formatJson(value: JsonRecord): string {
   return JSON.stringify(value, null, 2);
 }
 
-function resultState(value: JsonRecord): "idle" | "pass" | "blocked" {
-  if (value.ok === true) {
-    return "pass";
-  }
-  if (value.ok === false && readString(value.message) !== "Not run") {
-    return "blocked";
-  }
-  return "idle";
-}
-
 function readString(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : "";
 }
@@ -1049,24 +1147,6 @@ function readRecord(value: JsonValue | undefined): JsonRecord | undefined {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as JsonRecord)
     : undefined;
-}
-
-function shortenMiddle(value: string, start = 10, end = 10): string {
-  if (value.length <= start + end + 1) {
-    return value;
-  }
-  return `${value.slice(0, start)}...${value.slice(-end)}`;
-}
-
-function formatCkb(shannons: string): string {
-  if (!/^\d+$/.test(shannons)) {
-    return "pending";
-  }
-  const value = BigInt(shannons);
-  const whole = value / 100_000_000n;
-  const fraction = (value % 100_000_000n).toString().padStart(8, "0");
-  const trimmedFraction = fraction.replace(/0+$/, "") || "0";
-  return `${whole}.${trimmedFraction}`;
 }
 
 function getEthereumProvider(): EthereumProvider {
@@ -1105,10 +1185,6 @@ function utf8ToHex(value: string): string {
   ).join("")}`;
 }
 
-async function sha256(value: string): Promise<ArrayBuffer> {
-  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-}
-
 function randomBuffer(length: number): ArrayBuffer {
   const buffer = new ArrayBuffer(length);
   const bytes = new Uint8Array(buffer);
@@ -1137,122 +1213,4 @@ function base64UrlToBuffer(input: string): ArrayBuffer {
     bytes[index] = binary.charCodeAt(index);
   }
   return buffer;
-}
-
-function normalizeRawSignature(rawSignature: Uint8Array, order: bigint): Uint8Array {
-  if (rawSignature.length !== 64) {
-    throw new Error("Raw ECDSA signature must be 64 bytes");
-  }
-  const normalized = new Uint8Array(rawSignature);
-  const s = bytesToBigInt(normalized.slice(32));
-  if (s > order / 2n) {
-    normalized.set(bigIntToScalar(order - s), 32);
-  }
-  return normalized;
-}
-
-function bytesToBigInt(bytes: Uint8Array): bigint {
-  let value = 0n;
-  for (const byte of bytes) {
-    value = (value << 8n) | BigInt(byte);
-  }
-  return value;
-}
-
-function bigIntToScalar(value: bigint): Uint8Array {
-  const bytes = new Uint8Array(32);
-  let rest = value;
-  for (let index = 31; index >= 0; index -= 1) {
-    bytes[index] = Number(rest & 0xffn);
-    rest >>= 8n;
-  }
-  return bytes;
-}
-
-function derEcdsaSignatureToRaw(signature: Uint8Array): Uint8Array {
-  let offset = 0;
-  if (readByte(signature, offset) !== 0x30) {
-    throw new Error("DER signature must start with a sequence");
-  }
-  offset += 1;
-
-  const sequence = readDerLength(signature, offset);
-  offset = sequence.nextOffset;
-  if (offset + sequence.length !== signature.length) {
-    throw new Error("DER sequence length is invalid");
-  }
-
-  const r = readDerInteger(signature, offset);
-  offset = r.nextOffset;
-  const s = readDerInteger(signature, offset);
-  offset = s.nextOffset;
-  if (offset !== signature.length) {
-    throw new Error("DER signature has trailing bytes");
-  }
-
-  const raw = new Uint8Array(64);
-  raw.set(leftPadScalar(r.value), 0);
-  raw.set(leftPadScalar(s.value), 32);
-  return raw;
-}
-
-function readDerInteger(
-  bytes: Uint8Array,
-  offset: number,
-): { value: Uint8Array; nextOffset: number } {
-  if (readByte(bytes, offset) !== 0x02) {
-    throw new Error("DER integer is missing");
-  }
-  const length = readDerLength(bytes, offset + 1);
-  const start = length.nextOffset;
-  const end = start + length.length;
-  if (end > bytes.length || length.length === 0) {
-    throw new Error("DER integer length is invalid");
-  }
-  return {
-    value: bytes.slice(start, end),
-    nextOffset: end,
-  };
-}
-
-function readDerLength(
-  bytes: Uint8Array,
-  offset: number,
-): { length: number; nextOffset: number } {
-  const first = readByte(bytes, offset);
-  if ((first & 0x80) === 0) {
-    return { length: first, nextOffset: offset + 1 };
-  }
-  const lengthBytes = first & 0x7f;
-  if (lengthBytes === 0 || lengthBytes > 2) {
-    throw new Error("DER length is invalid");
-  }
-  if (offset + 1 + lengthBytes > bytes.length) {
-    throw new Error("DER length is truncated");
-  }
-  let length = 0;
-  for (let index = 0; index < lengthBytes; index += 1) {
-    length = (length << 8) | bytes[offset + 1 + index];
-  }
-  return { length, nextOffset: offset + 1 + lengthBytes };
-}
-
-function leftPadScalar(value: Uint8Array): Uint8Array {
-  let scalar = value;
-  while (scalar.length > 0 && scalar[0] === 0) {
-    scalar = scalar.slice(1);
-  }
-  if (scalar.length > 32) {
-    throw new Error("DER scalar is too large");
-  }
-  const padded = new Uint8Array(32);
-  padded.set(scalar, 32 - scalar.length);
-  return padded;
-}
-
-function readByte(bytes: Uint8Array, offset: number): number {
-  if (offset >= bytes.length) {
-    throw new Error("DER signature is truncated");
-  }
-  return bytes[offset];
 }

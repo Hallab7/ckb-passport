@@ -10,9 +10,9 @@ import {
   type VerifySiwdKeyChecksResult,
 } from "./key-checks.js";
 import {
-  verifyWalletSignature,
-  type VerifyWalletSignatureResult,
-} from "./wallet-verify.js";
+  verifySoftwareSignature,
+  type VerifySoftwareSignatureResult,
+} from "./software-verify.js";
 import {
   verifyWebAuthnSignature,
   type VerifyWebAuthnSignatureResult,
@@ -30,7 +30,7 @@ export type VerifySiwdProofOptions = Omit<
 export type VerifySiwdProofFailureCode =
   | VerifySiwdMessageChecksFailureCode
   | Extract<VerifySiwdKeyChecksResult, { ok: false }>["code"]
-  | Extract<VerifyWalletSignatureResult, { ok: false }>["code"]
+  | Extract<VerifySoftwareSignatureResult, { ok: false }>["code"]
   | Extract<VerifyWebAuthnSignatureResult, { ok: false }>["code"];
 
 export type VerifySiwdProofResult =
@@ -38,7 +38,7 @@ export type VerifySiwdProofResult =
       ok: true;
       did: string;
       keyId: string;
-      mode: "wallet" | "webauthn";
+      mode: "software" | "webauthn";
     }
   | {
       ok: false;
@@ -74,8 +74,8 @@ export async function verifySiwdProof(
   }
 
   const signature =
-    messageChecks.proof.mode === "wallet"
-      ? verifyWalletSignature({
+    messageChecks.proof.mode === "software"
+      ? verifySoftwareSignature({
           proof: messageChecks.proof,
           verificationMethod: keyChecks.verificationMethod,
         })

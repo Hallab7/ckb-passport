@@ -3,6 +3,7 @@ import {
   base64UrlDecode,
   buildSiwdMessage,
   bytesToHex,
+  decodeDidKey,
   type SiwdMessageFields,
 } from "@ckb-passport/siwd-core";
 import { passkeyAttestationToDidKey } from "@ckb-passport/siwd-browser";
@@ -13,7 +14,10 @@ import {
   InMemorySessionService,
   loadPassportPocConfig,
   resolveDidCell,
+  verifySiwdMessageChecks,
   verifySiwdProof,
+  verifySoftwareSignature,
+  verifyWebAuthnSignature,
   type PassportPocConfig,
   type PassportSession,
 } from "@ckb-passport/siwd-verify";
@@ -102,6 +106,106 @@ export async function convertAttestationToDidKey(
     ok: true,
     didKey: result.didKey,
     compressedPublicKey: bytesToHex(result.compressedPublicKey),
+  };
+}
+
+export async function verifyAuthKeyProofOfPossession(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const did = requireString(body, "did");
+  const didKey = requireString(body, "didKey");
+  const keyId = optionalString(body, "keyId") ?? DEFAULT_KEY_ID;
+  const proof = body.proof;
+  if (!isRecord(proof)) {
+    throw new ApiError(400, "proof_invalid", "proof must be an object");
+  }
+
+  const { config } = await getRuntime();
+  const messageChecks = verifySiwdMessageChecks({
+    proof,
+    expectedOrigin: config.expectedOrigin,
+    expectedNetwork: config.network,
+    nonceService,
+  });
+  if (!messageChecks.ok) {
+    return {
+      ...messageChecks,
+      did,
+      keyId,
+      didKey,
+    };
+  }
+
+  if (messageChecks.fields.did !== did) {
+    return {
+      ok: false,
+      code: "proof_did_mismatch",
+      message: "Proof DID must match the DID receiving this auth key",
+      did,
+      keyId,
+      didKey,
+    };
+  }
+  if (messageChecks.fields.keyId !== keyId) {
+    return {
+      ok: false,
+      code: "proof_key_id_mismatch",
+      message: "Proof key ID must match the DID document key ID",
+      did,
+      keyId,
+      didKey,
+    };
+  }
+
+  let decoded: ReturnType<typeof decodeDidKey>;
+  try {
+    decoded = decodeDidKey(didKey);
+  } catch (error) {
+    return {
+      ok: false,
+      code: "did_key_invalid",
+      message:
+        error instanceof Error ? error.message : "did:key could not be decoded",
+      did,
+      keyId,
+      didKey,
+    };
+  }
+
+  const verificationMethod = {
+    ok: true as const,
+    keyId,
+    didKey,
+    decoded,
+  };
+  const signature =
+    messageChecks.proof.mode === "software"
+      ? verifySoftwareSignature({
+          proof: messageChecks.proof,
+          verificationMethod,
+        })
+      : verifyWebAuthnSignature({
+          proof: messageChecks.proof,
+          verificationMethod,
+          expectedOrigin: config.expectedOrigin,
+          rpId: new URL(config.expectedOrigin).hostname,
+        });
+
+  if (!signature.ok) {
+    return {
+      ...signature,
+      did,
+      keyId,
+      didKey,
+    };
+  }
+
+  return {
+    ok: true,
+    did,
+    keyId,
+    didKey,
+    mode: messageChecks.proof.mode,
   };
 }
 

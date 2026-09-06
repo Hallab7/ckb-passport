@@ -11,7 +11,7 @@ configuration, and limits DID writes to an explicit live-update gate.
 
 ```text
 packages/siwd-core      canonical message, field validation, bytes, did:key, low-S policy
-packages/siwd-browser   passkey registration/assertion helpers and wallet proof builder
+packages/siwd-browser   passkey registration/assertion helpers and software-key proof builder
 packages/siwd-verify    testnet config, DID resolver, document decoder, verifier, sessions
 apps/demo               Next.js relying-party demo with guided evidence workflow
 vectors/vectors.json    reusable positive and negative SIWD proof vectors
@@ -68,14 +68,15 @@ access goes through the configured testnet RPC.
 The page runs the live demo in order:
 
 1. Resolve the supplied testnet DID.
-2. Register a platform passkey and derive the P-256 `did:key:zDna...`.
-3. Paste the DID cell lock private key into the password field and submit the DID update.
-4. Re-check `verificationMethods["auth-1"]` against the live DID cell.
-5. Build the Pudge explorer evidence link from the returned transaction hash.
-6. Request a nonce, sign in with the passkey, inspect the DID-only session, and replay the proof.
+2. Register a platform passkey or generate a software auth key and derive `did:key:zDna...`.
+3. Prove possession of the generated auth key before it can be written.
+4. Connect the DID controller EVM wallet and submit the DID update.
+5. Re-check `verificationMethods["auth-1"]` against the live DID cell.
+6. Build the Pudge explorer evidence link from the returned transaction hash.
+7. Request a nonce, sign in with the selected auth key, inspect the DID-only session, and replay the proof.
 
-Do not enter the DID lock private key into a deployed or third-party server. The demo is intended to
-run locally on `localhost`.
+Do not connect a production funds wallet to a deployed demo. The controller wallet is used only for
+the DID update transaction; login uses the published auth key.
 
 The supplied DID currently resolves with an empty verification method set. That is expected for a
 fresh DID and the demo can still add `auth-1`.
@@ -107,7 +108,7 @@ Live variables for command-line scripts:
 |---|---|
 | `CKB_PASSPORT_LIVE_DID` | Testnet `did:ckb` to resolve, update, and re-check. |
 | `CKB_PASSPORT_AUTH_KEY_ID` | Verification method key; defaults to `auth-1`. |
-| `CKB_PASSPORT_AUTH_DID_KEY` | P-256 passkey `did:key:zDna...` expected in the DID document. |
+| `CKB_PASSPORT_AUTH_DID_KEY` | Auth `did:key:zDna...` expected in the DID document. |
 | `CKB_PASSPORT_DID_LOCK_PRIVATE_KEY` | Testnet private key controlling the current DID cell lock. |
 | `CKB_PASSPORT_LIVE_PROOF_FILE` | Captured proof JSON for command-line drill verification. |
 | `CKB_PASSPORT_UPDATE_TX_HASH` | DID update transaction hash for explorer evidence. |
@@ -135,9 +136,13 @@ Current package checked: `@ckb-ccc/did-ckb@0.2.9`.
 ## Passkey Flow
 
 The demo page can register a platform passkey, send the attestation object to the local server, and
-receive a P-256 `did:key:zDna...`. The Next.js UI can then submit the DID update by posting the
-passkey `did:key` and the DID cell lock private key to the local update route. The private key is
-used only for that update request and is cleared from the input after a successful submission.
+receive a P-256 `did:key:zDna...`. Before the key is offered for a DID update, the browser signs a
+fresh SIWD challenge with that key and the server verifies proof-of-possession against the proposed
+`did:key`.
+
+The Next.js UI then submits the DID update through the browser-controller flow: connect the EVM
+wallet that controls the DID OmniLock, sign the update challenge, and broadcast the
+`transferDidCkb` transaction.
 
 ```powershell
 npm run demo
@@ -152,22 +157,20 @@ Login does not submit a transaction. The WebAuthn assertion signs
 `SHA-256(canonicalMessage)`, and the verifier checks the resolved DID document, `clientDataJSON`,
 `authenticatorData`, low-S policy, and nonce state before issuing a DID-only session.
 
-## Wallet Fallback
+## Software Auth Key Fallback
 
-Wallet mode is implemented as a fallback around CCC's `CkbSecp256k1` message signing convention:
+Wallet login was removed in the v2 design because wallet message verification binds to a wallet
+identity and can reintroduce address disclosure. The fallback is now a locally generated P-256
+software auth key. The browser stores the extractable JWK in IndexedDB, derives
+`did:key:zDna...`, proves possession with a registration challenge, and later signs SIWD login
+messages with `mode: "software"`.
 
-```text
-signed payload = hashCkb(utf8("Nervos Message:" + message))
-signer output  = 0x-prefixed 65-byte recoverable secp256k1 signature
-PoC envelope   = base64url(raw r||s, 64 bytes)
-```
-
-This is verified locally with `SignerCkbPrivateKey`. Live injected-wallet behavior still needs
-confirmation before wallet mode can be treated as an external relying-party result.
+This preserves the PoC property that login needs no wallet extension, no CKB transaction, and no
+spend key. Its storage is weaker than a passkey, so the UI treats passkeys as the primary path.
 
 ## Testnet Drill And Evidence
 
-Run the command-line drill after a passkey `did:key` has been written and re-resolved:
+Run the command-line drill after an auth `did:key` has been written and re-resolved:
 
 ```powershell
 npm run build
@@ -185,7 +188,7 @@ npm run evidence:explorer
 ```
 
 `EXPLORER-EVIDENCE.md` records the current evidence status. The script validates the configured DID,
-passkey `did:key:zDna...`, update transaction hash, and optional capacity value, then prints a
+auth `did:key:zDna...`, update transaction hash, and optional capacity value, then prints a
 Pudge testnet explorer transaction URL.
 
 ## H4 Audit
@@ -222,17 +225,17 @@ platform-authenticator sign-in, and recording evidence are not present.
 
 ## Vectors
 
-`vectors/vectors.json` contains positive local wallet and WebAuthn fixtures plus the required
+`vectors/vectors.json` contains positive local software-key and WebAuthn fixtures plus the required
 negative matrix: wrong domain, wrong URI origin, expired message, future `issuedAt`, replayed
 nonce, absent `keyId`, unsupported multicodec, high-S signature, WebAuthn origin mismatch,
-challenge mismatch, User Present clear, and zero live DID cells.
+challenge mismatch, User Present clear, zero live DID cells, and duplicate live DID cells.
 
 ## Current Limitations
 
-- A live testnet DID has resolved successfully, but no passkey `did:key`, update transaction hash,
+- A live testnet DID has resolved successfully, but no auth `did:key`, update transaction hash,
   proof file, or proof recording is present in this checkout.
 - H3 cannot be marked passed until the live DID update is submitted, confirmed, and re-resolved.
-- H4 local source audit passes, but the full browser/passkey login must still be recorded against a
+- H4 local source audit passes, but the full browser auth-key login must still be recorded against a
   live updated DID.
 - Resolver trust is one configured CKB RPC endpoint; light-client verification is full-project work.
 - Duplicate DID live cells fail closed in the PoC instead of implementing WIP-01 conflict

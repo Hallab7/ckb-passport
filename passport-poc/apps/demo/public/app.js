@@ -8,8 +8,6 @@ const state = {
 
 const P256_N =
   0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
-const SECP256K1_N =
-  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
 
 const els = {};
 
@@ -26,10 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "credentialOutput",
     "didKeyOutput",
     "passkeyStatus",
-    "walletSignButton",
-    "walletSubmitButton",
-    "walletSignatureInput",
-    "walletStatus",
     "replayButton",
     "verifyOutput",
     "sessionOutput",
@@ -43,8 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
   els.registerButton.addEventListener("click", registerPasskey);
   els.updateDidButton.addEventListener("click", updateDidDocument);
   els.passkeySignInButton.addEventListener("click", signInWithPasskey);
-  els.walletSignButton.addEventListener("click", requestWalletSignature);
-  els.walletSubmitButton.addEventListener("click", submitWalletProof);
   els.replayButton.addEventListener("click", replayLastProof);
   els.refreshSessionButton.addEventListener("click", refreshSession);
   els.clearSessionButton.addEventListener("click", clearSession);
@@ -181,37 +173,6 @@ async function signInWithPasskey() {
   }, els.verifyOutput);
 }
 
-async function requestWalletSignature() {
-  await withButton(els.walletSignButton, async () => {
-    const signer = findWalletSigner();
-    if (!signer) {
-      throw new Error("wallet signer unavailable");
-    }
-    const signature = await signer(readMessage());
-    els.walletSignatureInput.value = signature;
-    showJson(els.walletStatus, { ok: true, signature });
-  }, els.walletStatus);
-}
-
-async function submitWalletProof() {
-  await withButton(els.walletSubmitButton, async () => {
-    const did = readInput(els.didInput, "DID");
-    const keyId = readInput(els.keyIdInput, "Key ID");
-    const rawSignature = walletSignatureHexToRawBytes(
-      readInput(els.walletSignatureInput, "Signature Hex"),
-    );
-    const proof = {
-      v: 1,
-      did,
-      keyId,
-      message: readMessage(),
-      mode: "wallet",
-      signature: bytesToBase64Url(normalizeRawSignature(rawSignature, SECP256K1_N)),
-    };
-    await submitProof(proof);
-  }, els.walletStatus);
-}
-
 async function replayLastProof() {
   await withButton(els.replayButton, async () => {
     if (!state.lastProof) {
@@ -310,23 +271,6 @@ function requireWebAuthn() {
   }
 }
 
-function findWalletSigner() {
-  const candidates = [
-    globalThis.ckbPassportWallet,
-    globalThis.ckb,
-    globalThis.nervos,
-  ];
-  for (const wallet of candidates) {
-    if (wallet && typeof wallet.signMessage === "function") {
-      return async (message) => {
-        const result = await wallet.signMessage(message);
-        return typeof result === "string" ? result : result.signature;
-      };
-    }
-  }
-  return undefined;
-}
-
 function isPublicKeyCredential(credential) {
   return Boolean(
     credential &&
@@ -375,22 +319,6 @@ function base64UrlToBytes(input) {
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) {
     bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
-}
-
-function walletSignatureHexToRawBytes(signatureHex) {
-  if (!/^0x[0-9a-fA-F]{128}([0-9a-fA-F]{2})?$/.test(signatureHex)) {
-    throw new Error("wallet signature must be 64-byte raw or 65-byte recoverable hex");
-  }
-  return hexToBytes(`0x${signatureHex.slice(2, 130)}`);
-}
-
-function hexToBytes(hex) {
-  const value = hex.startsWith("0x") ? hex.slice(2) : hex;
-  const bytes = new Uint8Array(value.length / 2);
-  for (let index = 0; index < bytes.length; index += 1) {
-    bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16);
   }
   return bytes;
 }

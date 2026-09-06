@@ -7,7 +7,7 @@ import {
 } from "@ckb-passport/siwd-core";
 import type { NonceConsumeResult } from "./nonce.js";
 
-export type SiwdProofMode = "wallet" | "webauthn";
+export type SiwdProofMode = "software" | "webauthn";
 
 export type BaseSiwdProofEnvelope = {
   v: 1;
@@ -18,8 +18,8 @@ export type BaseSiwdProofEnvelope = {
   signature: string;
 };
 
-export type WalletSiwdProofEnvelope = BaseSiwdProofEnvelope & {
-  mode: "wallet";
+export type SoftwareSiwdProofEnvelope = BaseSiwdProofEnvelope & {
+  mode: "software";
 };
 
 export type WebAuthnSiwdProofEnvelope = BaseSiwdProofEnvelope & {
@@ -28,7 +28,7 @@ export type WebAuthnSiwdProofEnvelope = BaseSiwdProofEnvelope & {
   authenticatorData: string;
 };
 
-export type SiwdProofEnvelope = WalletSiwdProofEnvelope | WebAuthnSiwdProofEnvelope;
+export type SiwdProofEnvelope = SoftwareSiwdProofEnvelope | WebAuthnSiwdProofEnvelope;
 
 export type NonceConsumer = {
   consume(nonce: string): NonceConsumeResult;
@@ -149,11 +149,11 @@ function parseProofEnvelope(
     };
   }
 
-  if (proof.mode !== "wallet" && proof.mode !== "webauthn") {
+  if (proof.mode !== "software" && proof.mode !== "webauthn") {
     return {
       ok: false,
       code: "proof_invalid",
-      message: "proof mode must be wallet or webauthn",
+      message: "proof mode must be software or webauthn",
     };
   }
 
@@ -181,7 +181,7 @@ function parseProofEnvelope(
     return { ok: true, proof: proof as WebAuthnSiwdProofEnvelope };
   }
 
-  return { ok: true, proof: proof as WalletSiwdProofEnvelope };
+  return { ok: true, proof: proof as SoftwareSiwdProofEnvelope };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

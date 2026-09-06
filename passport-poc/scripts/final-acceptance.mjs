@@ -14,6 +14,7 @@ const requiredNegativeVectors = [
   "webauthn-challenge-mismatch",
   "webauthn-user-present-clear",
   "did-zero-live-cells",
+  "did-ambiguous-live-cells",
 ];
 
 if (checkOnly) {
@@ -26,13 +27,14 @@ if (checkOnly) {
           "one-command demo check",
           "supplied live DID resolver evidence",
           "vectors.json includes all required negatives",
+          "registration proof-of-possession endpoint is present",
           "REPORT.md includes H1 through H4 outcomes",
           "H4 source audit exists",
         ],
         liveChecks: [
-          "passkey DID update confirmed",
+          "auth-key DID update confirmed",
           "verificationMethods[keyId] begins did:key:zDna on explorer",
-          "passkey sign-in recorded",
+          "auth-key sign-in recorded",
           "replay rejection recorded",
         ],
       },
@@ -75,9 +77,15 @@ const items = [
       "A supplied CKB_PASSPORT_LIVE_DID resolves from live testnet cells in the targeted resolver test",
   },
   {
-    id: "passkey_did_update",
+    id: "auth_key_did_update",
     status: "unresolved",
-    evidence: "missing passkey did:key, signer, and update transaction evidence",
+    evidence: "missing auth did:key, signer, and update transaction evidence",
+  },
+  {
+    id: "registration_proof_of_possession",
+    status: readme.includes("proof-of-possession") ? "pass" : "fail",
+    evidence:
+      "README.md documents auth-key proof-of-possession before DID update",
   },
   {
     id: "verification_method_zdna",
@@ -85,7 +93,7 @@ const items = [
     evidence: "EXPLORER-EVIDENCE.md is marked not captured",
   },
   {
-    id: "passkey_sign_in_only",
+    id: "auth_key_sign_in_only",
     status: "unresolved",
     evidence: "RECORDING.md is marked not captured",
   },
@@ -98,6 +106,12 @@ const items = [
     id: "replay_identical_proof",
     status: vectorNames.has("replayed-nonce") ? "pass" : "fail",
     evidence: "vectors.json contains replayed-nonce with expected nonce_consumed failure",
+  },
+  {
+    id: "duplicate_live_cells",
+    status: vectorNames.has("did-ambiguous-live-cells") ? "pass" : "fail",
+    evidence:
+      "vectors.json contains did-ambiguous-live-cells and resolver tests fail closed",
   },
   {
     id: "vectors_run_by_tests",

@@ -26,10 +26,10 @@ export type {
   NonceConsumer,
   SiwdProofEnvelope,
   SiwdProofMode,
+  SoftwareSiwdProofEnvelope,
   VerifySiwdMessageChecksFailureCode,
   VerifySiwdMessageChecksOptions,
   VerifySiwdMessageChecksResult,
-  WalletSiwdProofEnvelope,
   WebAuthnSiwdProofEnvelope,
 } from "./proof.js";
 export { evaluateSiwdVector } from "./vector-runner.js";
@@ -84,19 +84,12 @@ export type {
 export { selectVerificationMethod } from "./verification-method.js";
 export type { VerificationMethodSelection } from "./verification-method.js";
 export {
-  hashCkbPersonalMessage,
-  recoverableHexToRawSignatureHex,
-  WALLET_RAW_SIGNATURE_HEX_LENGTH,
-  WALLET_SIGNATURE_HEX_LENGTH,
-  WALLET_SIGNING_CONVENTION,
-  walletSigningConvention,
-} from "./wallet-signing.js";
-export type { WalletSigningConvention } from "./wallet-signing.js";
-export { verifyWalletSignature } from "./wallet-verify.js";
+  verifySoftwareSignature,
+} from "./software-verify.js";
 export type {
-  VerifyWalletSignatureOptions,
-  VerifyWalletSignatureResult,
-} from "./wallet-verify.js";
+  VerifySoftwareSignatureOptions,
+  VerifySoftwareSignatureResult,
+} from "./software-verify.js";
 export { verifyWebAuthnSignature } from "./webauthn-verify.js";
 export type {
   VerifyWebAuthnSignatureOptions,

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Browser helpers for passkey and wallet SIWD proofs.",
+  "description": "Browser helpers for passkey and software-key SIWD proofs.",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"

@@ -66,9 +66,11 @@ describe("demo server", () => {
     expect(page).toContain("id=\"didInput\"");
     expect(page).toContain("id=\"replayButton\"");
     expect(page).toContain("id=\"sessionOutput\"");
+    expect(page).not.toContain("Submit Wallet Proof");
     expect(scriptResponse.headers.get("content-type")).toContain("text/javascript");
     expect(script).toContain("/api/nonce");
     expect(script).toContain("/api/verify");
+    expect(script).not.toContain("mode: \"wallet\"");
     expect(script).not.toContain("localStorage");
   });
 
@@ -141,7 +143,7 @@ describe("demo server", () => {
         ok: true,
         did,
         keyId,
-        mode: "wallet",
+        mode: "software",
       }),
     });
     const verifyResponse = await fetch(`${baseUrl}/api/verify`, {
@@ -232,5 +234,5 @@ const okVerifier = async (): Promise<VerifySiwdProofResult> => ({
   ok: true,
   did,
   keyId,
-  mode: "wallet",
+  mode: "software",
 });

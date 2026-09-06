@@ -22,7 +22,7 @@ if (checkOnly) {
         ],
         checks: [
           "resolve configured testnet DID",
-          "check verificationMethods[keyId] equals the passkey did:key",
+          "check verificationMethods[keyId] equals the auth did:key",
           "verify an optional captured live proof file",
           "issue a DID-only demo session after proof verification",
           "verify replay of the same proof fails with nonce_consumed",
@@ -42,7 +42,7 @@ if (missing.length > 0) {
       {
         ok: false,
         code: "missing_e2e_testnet_inputs",
-        message: "live testnet drill requires a DID and expected passkey did:key",
+        message: "live testnet drill requires a DID and expected auth did:key",
         missing,
       },
       null,
@@ -85,7 +85,7 @@ const proofCheck = proofFile
   : {
       ok: false,
       status: "missing_live_proof_file",
-      message: "set CKB_PASSPORT_LIVE_PROOF_FILE to a captured WebAuthn or wallet proof JSON file",
+      message: "set CKB_PASSPORT_LIVE_PROOF_FILE to a captured WebAuthn or software proof JSON file",
     };
 
 const report = {

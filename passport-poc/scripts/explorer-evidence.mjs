@@ -31,7 +31,7 @@ if (missing.length > 0) {
       {
         ok: false,
         code: "missing_explorer_evidence",
-        message: "explorer evidence requires a live DID, passkey did:key, and update transaction hash",
+        message: "explorer evidence requires a live DID, auth did:key, and update transaction hash",
         missing,
       },
       null,

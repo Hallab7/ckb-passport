@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 const loginFiles = [
   "apps/demo/src/server.ts",
   "apps/demo/public/app.js",
+  "apps/demo/app/api/auth-key/proof-of-possession/route.ts",
   "apps/demo/app/api/nonce/route.ts",
   "apps/demo/app/api/verify/route.ts",
   "apps/demo/app/api/session/route.ts",
@@ -13,7 +14,7 @@ const loginFiles = [
   "packages/siwd-verify/src/proof.ts",
   "packages/siwd-verify/src/verification.ts",
   "packages/siwd-browser/src/passkey-assertion.ts",
-  "packages/siwd-browser/src/wallet-proof.ts",
+  "packages/siwd-browser/src/software-key.ts",
 ];
 
 const registrationUpdateFiles = [
@@ -59,7 +60,7 @@ const result = {
     forbiddenFindings: loginFindings,
     conclusion:
       loginFindings.length === 0
-        ? "login/session/proof code does not store or request CKB address, lock script, lock hash, transaction skeleton, transaction signature, or browser storage"
+        ? "login/session/proof code does not store or request CKB address, lock script, lock hash, transaction skeleton, or transaction signature"
         : "login/session/proof code contains forbidden H4 findings",
   },
   proofEnvelope: {
@@ -83,8 +84,8 @@ const result = {
     allowedFindings: registrationUpdateFindings,
     note: "DID lock signer and transaction submission are isolated to registration/update code",
   },
-  walletMode: {
-    note: "an injected wallet may show account UI while signing, but Passport stores only the proof and DID-only session fields",
+  controllerWallet: {
+    note: "an injected wallet may show account UI while authorising DID updates, but wallet signing is not a login mode",
   },
 };
 

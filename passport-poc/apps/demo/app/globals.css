@@ -196,25 +196,6 @@ h2 {
   gap: 10px;
 }
 
-.control-status {
-  max-width: 320px;
-  min-height: 20px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 760;
-  line-height: 1.25;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.control-status.pass {
-  color: var(--ink);
-}
-
-.control-status.blocked {
-  color: #8d1111;
-}
-
 .domain-alert {
   display: flex;
   gap: 12px;
@@ -239,10 +220,7 @@ h2 {
 }
 
 .registry-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 65fr) minmax(360px, 35fr);
-  gap: 54px;
-  align-items: end;
+  display: block;
   padding: 84px 0 54px;
 }
 
@@ -250,15 +228,13 @@ h2 {
   display: grid;
   gap: 24px;
   min-width: 0;
+  max-width: 980px;
 }
 
 .section-heading,
 .eyebrow,
 .result-title,
-.text-label > span,
-.snapshot-head span,
-.snapshot-item span,
-.snapshot-balance span {
+.text-label > span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
@@ -272,63 +248,6 @@ h2 {
   color: var(--muted);
   font-size: 18px;
   line-height: 1.8;
-  overflow-wrap: anywhere;
-}
-
-.market-snapshot {
-  display: grid;
-  gap: 24px;
-  min-width: 0;
-  padding: 28px;
-  border: 1px solid var(--line-strong);
-  border-radius: 24px;
-  background: var(--inverse);
-  color: #ffffff;
-}
-
-.snapshot-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: center;
-}
-
-.snapshot-balance {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.snapshot-balance strong {
-  min-width: 0;
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-  font-size: 34px;
-  line-height: 1;
-  font-weight: 760;
-  overflow-wrap: anywhere;
-}
-
-.snapshot-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  border: 1px solid #222222;
-  background: #222222;
-}
-
-.snapshot-item {
-  display: grid;
-  gap: 8px;
-  min-height: 78px;
-  padding: 14px;
-  background: #050505;
-}
-
-.snapshot-item strong {
-  min-width: 0;
-  color: #ffffff;
-  font-size: 15px;
-  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
@@ -378,53 +297,6 @@ h2 {
   margin-bottom: 6px;
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  max-width: 100%;
-  padding: 0 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: #ffffff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 850;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.market-snapshot .status-badge {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #000000;
-}
-
-.status-badge.pass {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #ffffff;
-}
-
-.market-snapshot .status-badge.pass {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #000000;
-}
-
-.status-badge.blocked {
-  border-color: var(--ink);
-  background: repeating-linear-gradient(
-    135deg,
-    #ffffff 0,
-    #ffffff 6px,
-    var(--surface) 6px,
-    var(--surface) 12px
-  );
-  color: var(--ink);
-}
-
 .panel-body {
   display: grid;
   gap: 14px;
@@ -441,6 +313,37 @@ h2 {
 
 .field-grid.one {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.segmented-control {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 360px);
+  min-height: 40px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.segmented-control button {
+  min-width: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.segmented-control button.active {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.segmented-control button:disabled {
+  color: var(--muted);
 }
 
 .text-label {
@@ -627,11 +530,6 @@ pre {
   h1 {
     font-size: 96px;
   }
-
-  .registry-hero {
-    grid-template-columns: minmax(0, 60fr) minmax(340px, 40fr);
-    gap: 38px;
-  }
 }
 
 @media (max-width: 1024px) {
@@ -639,7 +537,6 @@ pre {
     font-size: 80px;
   }
 
-  .registry-hero,
   .dashboard-layout {
     grid-template-columns: 1fr;
   }
@@ -693,30 +590,18 @@ pre {
     justify-content: flex-start;
   }
 
-  .control-status {
-    max-width: 100%;
-    text-align: left;
-  }
-
   .registry-hero {
-    grid-template-columns: 1fr;
-    gap: 28px;
     padding: 52px 0 36px;
   }
 
   h1,
-  .hero-copy,
-  .market-snapshot {
+  .hero-copy {
     max-width: calc(100vw - 36px);
   }
 
   .hero-description {
     width: min(100%, 34ch);
     max-width: calc(100vw - 36px);
-  }
-
-  .market-snapshot {
-    border-radius: 18px;
   }
 
   .field-grid.two {
@@ -745,8 +630,7 @@ pre {
   }
 
   h1,
-  .hero-copy,
-  .market-snapshot {
+  .hero-copy {
     max-width: calc(100vw - 28px);
   }
 
@@ -755,17 +639,8 @@ pre {
     max-width: calc(100vw - 28px);
   }
 
-  .market-snapshot,
   .panel {
     padding: 14px;
-  }
-
-  .snapshot-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .snapshot-balance strong {
-    font-size: 28px;
   }
 
   .nav-actions,

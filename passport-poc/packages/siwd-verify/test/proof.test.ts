@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   InMemoryNonceService,
   verifySiwdMessageChecks,
-  type WalletSiwdProofEnvelope,
+  type SoftwareSiwdProofEnvelope,
 } from "../src/index.js";
 
 const now = new Date("2026-09-04T08:00:00Z");
@@ -164,13 +164,13 @@ function runWith(
   });
 }
 
-function proofFor(fields: SiwdMessageFields): WalletSiwdProofEnvelope {
+function proofFor(fields: SiwdMessageFields): SoftwareSiwdProofEnvelope {
   return {
     v: 1,
     did: fields.did,
     keyId: fields.keyId,
     message: buildSiwdMessage(fields),
-    mode: "wallet",
+    mode: "software",
     signature: "AA",
   };
 }

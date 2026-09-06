@@ -5,7 +5,7 @@ const defaultRecordingPath = "evidence/passport-poc-recording.mp4";
 const recordingPath = process.env.CKB_PASSPORT_RECORDING ?? defaultRecordingPath;
 const requiredScenes = [
   "tests passing",
-  "passkey registration or exact H3 failure",
+  "auth-key registration or exact H3 failure",
   "DID update or exact update blocker",
   "session contents after sign-in",
   "identical proof replay rejected",

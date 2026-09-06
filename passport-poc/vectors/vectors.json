@@ -1,25 +1,25 @@
 [
   {
-    "name": "wallet-positive-local-fixture",
+    "name": "software-positive-local-fixture",
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Wallet123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "97_upFHQtn7vNwShjKR6Y6gTzHT40tA3urg_lsEsQO83UHGvKbnKhhs0c1A3u8Ret7N3esfYVnMUewTeUjMCRA"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Software123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "rPUxADyge4KG39Srmvox97kOQeD-_tcS2XT1mYoW8m4gKvRcFkyJjrYf7cFQ6w0WbcWfib9yM9hfstcvmlWPbg"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
     "expect": "pass",
-    "reason": "local CCC secp256k1 wallet fixture verifies against the DID document key",
+    "reason": "local P-256 software auth key fixture verifies against the DID document key",
     "now": "2026-09-04T08:00:00Z",
     "nonceState": "issued",
     "resolver": {
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -57,10 +57,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "evil.test wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongDom123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "HQQtT5KKvtv9uYOs5exvGLvVjNLaX7JR3oikHCSPIXcobEa3AoADBcprKmZSJDj1IBg8XqHS0GAQjebZVAJD9A"
+      "keyId": "auth-1",
+      "message": "evil.test wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongDom123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "yGFLGubpCPvkE6DeirXQ3GAo4NfS7URjppKFR6jeuSwvtNfu_2aGML1H6bGJjHHWeA7XYJcPO6F3q1W-2e982g"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -73,7 +73,7 @@
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -83,10 +83,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://evil.test/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongUri123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "cu3_O-3lNN00gWFBUts1XNR6PKBMdvi7BASH_CHSm-JCrc1v7AgTHT4pNMLNCxKHYufJ07mdnLtwxzOZe2461Q"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://evil.test/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: WrongUri123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "hRFs-4ekIPBK7zi_QRnXXOMWC1E9998noeq6IO1avRs-NNZpEeUTjvUUxN0PDnVVA3axlmOzhnBTMCan32nf3Q"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -99,7 +99,7 @@
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -109,10 +109,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Expired123456\nIssued At: 2026-09-04T07:50:00Z\nExpiration Time: 2026-09-04T07:55:00Z",
-      "mode": "wallet",
-      "signature": "FjJ2zBpWHOGz1ZS4Bl_3Y-kwHNmgJSTvH796CPgluRxLoPugQdcuV8h_abY0ypLYl1s7yXk58mUJhXxL90JTyA"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Expired123456\nIssued At: 2026-09-04T07:50:00Z\nExpiration Time: 2026-09-04T07:55:00Z",
+      "mode": "software",
+      "signature": "4XTzMjyNKQhHZLwCLvQcFcvqOxjYvRukVcqabYiJIFZ8jZhxFVKYVUio0G6l3PG8rM_lIGzBUGusGa_vavqvNg"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -125,7 +125,7 @@
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -135,10 +135,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Future123456\nIssued At: 2026-09-04T08:02:01Z\nExpiration Time: 2026-09-04T08:04:00Z",
-      "mode": "wallet",
-      "signature": "abjoyy-H6BLo1gBcQnd92fEQAXOldrWr0b45XdM2E3FArtA5Q2va8oyOLp_mh-l5F_TYo8V_M7q-wjdWIBdSjw"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Future123456\nIssued At: 2026-09-04T08:02:01Z\nExpiration Time: 2026-09-04T08:04:00Z",
+      "mode": "software",
+      "signature": "iLnYgm98hMM8H6QOnqVJyOKRN27AXZI4ebS6hUn7elYy_FXqvm7b_ghTFtnybOlyq1GOvQqULL3BiUQBXt3Lig"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -151,7 +151,7 @@
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -161,10 +161,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Replay123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "12KOxLRLOm_Tdms-vOUwcl-rHZgjPdMvnq5jxD_F1ws6yjPjnphInfc4ooqG7RIPcKLWupoMOAXYC8-u-hGZ3g"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Replay123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "nx5vGybCl-c6JFEzr7mbqYNruM5_sCeCeaGWx-Ciss1nyNyWnffoswC1UXyMeXgsgxehUWvfVzWQUt_mjlj-7w"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -177,7 +177,7 @@
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -243,23 +243,23 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: HighSig123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "JBOqlXcLA8tsRKQT7dKDL9a_vHPbuwfJbLgTtQtRhenzJ9QfsK6ECsjsqw2Ky9nN9Ms5PGV10Yt0LZcT8xHTig"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: HighSig123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH_____AAAAAP__________vOb6racXnoTzucrC_GMlUA"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
     "expect": "fail",
     "expectedFailure": "signature_high_s",
-    "reason": "incoming wallet signature is high-S",
+    "reason": "incoming software signature is high-S",
     "now": "2026-09-04T08:00:00Z",
     "nonceState": "issued",
     "resolver": {
       "liveCells": 1,
       "document": {
         "verificationMethods": {
-          "wallet": "did:key:zQ3shgVXZLaMzm5S5x7XzGUG6YFHFLtoEMiv9ao2Bqa7hGyg2"
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
         }
       }
     }
@@ -356,10 +356,10 @@
     "proof": {
       "v": 1,
       "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "keyId": "wallet",
-      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: wallet\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: ZeroCells123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
-      "mode": "wallet",
-      "signature": "unB9qEhEPG8ZQA10Wp207g0kxLkS6b0mG7q2IL53d4s5AXsybTSXttFgkVMPOzDxwFBLYgMuXH7QkYro9oJ1pg"
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: ZeroCells123456\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "RyMwDNUHwAwYrbYdceHRXm-eQsCeL9_YNxzk42XePtdvcjl2_sejVyMYpVs9NwSt92wLaZ32P1XeFRxQhiTfMA"
     },
     "expectedOrigin": "http://localhost:3000",
     "network": "ckb-testnet",
@@ -370,6 +370,32 @@
     "nonceState": "issued",
     "resolver": {
       "liveCells": 0
+    }
+  },
+  {
+    "name": "did-ambiguous-live-cells",
+    "proof": {
+      "v": 1,
+      "did": "did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "auth-1",
+      "message": "localhost:3000 wants you to sign in with your CKB DID:\ndid:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nSign in to Passport PoC\n\nKey ID: auth-1\nURI: http://localhost:3000/login\nVersion: 1\nNetwork: ckb-testnet\nNonce: Ambiguous12345\nIssued At: 2026-09-04T07:59:00Z\nExpiration Time: 2026-09-04T08:01:00Z",
+      "mode": "software",
+      "signature": "uCl2D4dfcImFtaQepNRX6EdjffRPinxJtvQ1LSsAVpwTyAts0GFV-iHZzaJX1K0KwU8AUtiHbfGXS6FWikCntA"
+    },
+    "expectedOrigin": "http://localhost:3000",
+    "network": "ckb-testnet",
+    "expect": "fail",
+    "expectedFailure": "did_cell_resolve_failed",
+    "reason": "DID resolves to more than one live cell and the resolver fails closed",
+    "now": "2026-09-04T08:00:00Z",
+    "nonceState": "issued",
+    "resolver": {
+      "liveCells": 2,
+      "document": {
+        "verificationMethods": {
+          "auth-1": "did:key:zDnaejgmAHMLkBPMBWnkBxyGxpXx8LgE4WJAYDhwZzyoRAddF"
+        }
+      }
     }
   }
 ]

@@ -27,12 +27,20 @@ export type {
   PasskeyRegistrationResult,
 } from "./passkey-registration.js";
 export {
-  buildWalletProof,
-  WalletProofError,
-  walletSignatureHexToRawBytes,
-} from "./wallet-proof.js";
+  clearSoftwareAuthKey,
+  DEFAULT_SOFTWARE_AUTH_KEY_STORAGE_KEY,
+  generateSoftwareAuthKey,
+  IndexedDbSoftwareAuthKeyStore,
+  loadSoftwareAuthKey,
+  signInWithSoftwareKey,
+  SoftwareAuthKeyError,
+} from "./software-key.js";
 export type {
-  WalletMessageSigner,
-  WalletProofEnvelope,
-  WalletProofOptions,
-} from "./wallet-proof.js";
+  GenerateSoftwareAuthKeyOptions,
+  LoadSoftwareAuthKeyOptions,
+  SignInWithSoftwareKeyOptions,
+  SoftwareAuthKeyRecord,
+  SoftwareAuthKeyState,
+  SoftwareAuthKeyStore,
+  SoftwareProofEnvelope,
+} from "./software-key.js";

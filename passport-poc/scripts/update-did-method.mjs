@@ -53,7 +53,7 @@ console.log(
           capacityShannons: result.capacityShannons,
           feeRateShannonsPerKw: result.feeRateShannonsPerKw,
           feePaidShannons: result.feePaidShannons,
-          note: "The passkey did:key was written using the DID cell lock signer, not the passkey.",
+          note: "The auth did:key was written using the DID cell lock signer, not the auth key.",
         }
       : result,
     null,
