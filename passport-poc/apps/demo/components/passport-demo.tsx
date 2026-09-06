@@ -13,6 +13,7 @@ import {
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clipboard,
   ExternalLink,
@@ -20,6 +21,8 @@ import {
   KeyRound,
   Link2,
   Loader2,
+  LogOut,
+  Menu,
   RefreshCw,
   RotateCcw,
   Send,
@@ -144,6 +147,7 @@ function PassportDemoContent() {
   const [config, setConfig] = useState<ConfigPayload | null>(null);
   const [configError, setConfigError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>("resolve");
+  const [tabMenuOpen, setTabMenuOpen] = useState(false);
   const [walletProfile, setWalletProfile] = useState<WalletProfile | null>(null);
   const [availableDids, setAvailableDids] = useState<DidOption[]>([]);
   const [did, setDid] = useState("");
@@ -200,6 +204,7 @@ function PassportDemoContent() {
 
   const expectedOriginUrl = config?.expectedOrigin ?? "http://localhost:3000";
   const selectedDid = did.trim();
+  const activeTabDetails = TABS.find((tab) => tab.key === activeTab) ?? TABS[0];
   const selectedDidOption = availableDids.find((option) => option.did === selectedDid);
   const resolvedMethods = readRecord(selectedDidOption?.verificationMethods);
   const resolvedDidKey = resolvedMethods ? readString(resolvedMethods[keyId]) : "";
@@ -593,16 +598,12 @@ function PassportDemoContent() {
           </span>
           <span>CKB Passport</span>
         </a>
-        <div className="nav-status">
-          <span>{config?.network ?? "ckb-testnet"}</span>
-          <span>{walletConnected ? "Wallet connected" : "Wallet required"}</span>
-        </div>
         <div className="nav-actions">
           {walletConnected ? (
             <>
               <span className="wallet-pill">{shorten(walletProfile?.address ?? "")}</span>
               <ActionButton
-                icon={<Wallet size={16} />}
+                icon={<LogOut className="logout-icon" size={16} />}
                 label="Disconnect"
                 title="Disconnect wallet"
                 busy={false}
@@ -673,19 +674,38 @@ function PassportDemoContent() {
       </section>
 
       <section className="workflow-shell">
-        <aside className="tab-list" aria-label="Demo tasks">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={activeTab === tab.key ? "active" : undefined}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-              <ChevronRight size={15} aria-hidden="true" />
-            </button>
-          ))}
+        <aside
+          className={`tab-list ${tabMenuOpen ? "open" : ""}`}
+          aria-label="Demo tasks"
+        >
+          <button
+            type="button"
+            className="tab-menu-trigger"
+            onClick={() => setTabMenuOpen((open) => !open)}
+            aria-expanded={tabMenuOpen}
+            aria-controls="passport-demo-tabs"
+          >
+            <Menu size={17} aria-hidden="true" />
+            <span>{activeTabDetails.label}</span>
+            <ChevronDown size={15} aria-hidden="true" />
+          </button>
+          <div className="tab-options" id="passport-demo-tabs">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={activeTab === tab.key ? "active" : undefined}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setTabMenuOpen(false);
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                <ChevronRight size={15} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
         </aside>
 
         <section className="tab-panel">
@@ -1117,6 +1137,7 @@ function ActionButton({
       onClick={() => void onClick()}
       disabled={busy || disabled}
       title={title}
+      aria-label={label}
     >
       {busy ? <Loader2 className="spin" size={16} aria-hidden="true" /> : icon}
       <span>{label}</span>
