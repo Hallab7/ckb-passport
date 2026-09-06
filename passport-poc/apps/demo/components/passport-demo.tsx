@@ -648,7 +648,7 @@ function PassportDemoContent() {
       <section className="hero-section" id="top">
         <div className="hero-copy">
           <span className="section-heading">Wallet-first DID access</span>
-          <h1>Use your DID with a passkey.</h1>
+          <h1>Add passkey access to your CKB DID.</h1>
           <p>
             Connect the wallet that owns your DID, register a browser passkey,
             then sign in without using the wallet again.
