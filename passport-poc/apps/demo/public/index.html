@@ -3,78 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CKB Passport PoC</title>
+    <title>CKB Passport Demo</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <h1>CKB Passport PoC</h1>
-        <p id="configStatus" class="muted">Loading</p>
-      </div>
-      <div class="top-actions">
-        <button id="refreshSessionButton" type="button">Refresh Session</button>
-        <button id="clearSessionButton" type="button" class="secondary">Clear</button>
-      </div>
-    </header>
-
-    <main class="workspace">
-      <section class="panel">
-        <h2>Identity</h2>
-        <div class="form-grid">
-          <label>
-            DID
-            <input id="didInput" autocomplete="off" spellcheck="false" placeholder="did:ckb:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
-          </label>
-          <label>
-            Key ID
-            <input id="keyIdInput" autocomplete="off" spellcheck="false" value="auth-1" readonly>
-          </label>
-        </div>
-        <div class="button-row">
-          <button id="nonceButton" type="button">Request Nonce</button>
-        </div>
-        <label>
-          Message
-          <textarea id="messageOutput" readonly rows="9"></textarea>
-        </label>
-      </section>
-
-      <section class="panel">
-        <h2>Passkey</h2>
-        <div class="button-row">
-          <button id="registerButton" type="button">Register</button>
-          <button id="updateDidButton" type="button" class="secondary">Update DID</button>
-          <button id="passkeySignInButton" type="button">Sign In</button>
-        </div>
-        <label>
-          Credential ID
-          <input id="credentialOutput" readonly autocomplete="off" spellcheck="false">
-        </label>
-        <label>
-          did:key
-          <input id="didKeyOutput" readonly autocomplete="off" spellcheck="false">
-        </label>
-        <pre id="passkeyStatus" class="status" aria-live="polite"></pre>
-      </section>
-
-      <section class="panel">
-        <h2>Verifier</h2>
-        <div class="button-row">
-          <button id="replayButton" type="button" class="danger">Replay Last Proof</button>
-        </div>
-        <div class="output-grid">
-          <label>
-            Result
-            <pre id="verifyOutput" class="status tall" aria-live="polite"></pre>
-          </label>
-          <label>
-            Session
-            <pre id="sessionOutput" class="status tall" aria-live="polite"></pre>
-          </label>
-        </div>
-      </section>
+    <main class="fallback-shell">
+      <span class="eyebrow">CKB Passport</span>
+      <h1>Wallet-first DID demo</h1>
+      <p>
+        The current demo runs as a Next.js app with CCC wallet connection,
+        automatic DID resolution, wallet-approved passkey registration, and
+        plain-language results.
+      </p>
+      <a id="demoLink" href="/">Open demo</a>
     </main>
   </body>
 </html>

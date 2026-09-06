@@ -11,7 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ckb-ccc/connector-react": "^1.1.9",
     "@ckb-ccc/core": "^1.19.1",
+    "@ckb-ccc/did-ckb": "^0.2.9",
     "@ckb-passport/siwd-browser": "^0.0.0",
     "@ckb-passport/siwd-core": "^0.0.0",
     "@ckb-passport/siwd-verify": "^0.0.0",

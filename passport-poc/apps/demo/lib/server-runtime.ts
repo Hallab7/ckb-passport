@@ -1,4 +1,5 @@
 import { ccc } from "@ckb-ccc/core";
+import { listDidCkbsByLock } from "@ckb-ccc/did-ckb";
 import {
   base64UrlDecode,
   buildSiwdMessage,
@@ -66,7 +67,7 @@ export function configPayload(
     rpId: new URL(config.expectedOrigin).hostname,
     didCodeHash: config.didCodeHash,
     didHashType: config.didHashType,
-    didUpdateInput: "browser-evm-wallet",
+    didUpdateInput: "ccc-wallet",
     hasServerDidLockSigner: Boolean(process.env.CKB_PASSPORT_DID_LOCK_PRIVATE_KEY),
     defaultKeyId: DEFAULT_KEY_ID,
     defaultFeeRateShannonsPerKw: DEFAULT_FEE_RATE_SHANNONS_PER_KW,
@@ -239,6 +240,69 @@ export async function resolveDidForUi(
     capacityShannons: stringifyCapacity(resolution.cell.cellOutput.capacity),
     verificationMethodKeys: Object.keys(decoded.document.verificationMethods),
     verificationMethods: decoded.document.verificationMethods,
+  };
+}
+
+export async function resolveDidByWalletForUi(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const locks = readScriptArray(body.locks);
+  const { client } = await getRuntime();
+  const records = new Map<string, Record<string, unknown>>();
+
+  for (const lock of locks.slice(0, 12)) {
+    const didRecords = await listDidCkbsByLock({
+      client,
+      lock,
+      order: "desc",
+      limit: 20,
+    });
+
+    for (const record of didRecords) {
+      if (records.has(record.did)) {
+        continue;
+      }
+
+      const decoded = decodeDidDocumentFromCell(record.cell);
+      const capacityShannons = stringifyCapacity(record.cell.cellOutput.capacity);
+      if (!decoded.ok) {
+        records.set(record.did, {
+          ok: false,
+          did: record.did,
+          id: record.id,
+          message: decoded.message,
+          capacityShannons,
+        });
+        continue;
+      }
+
+      records.set(record.did, {
+        ok: true,
+        did: record.did,
+        id: record.id,
+        capacityShannons,
+        verificationMethodKeys: Object.keys(decoded.document.verificationMethods),
+        verificationMethods: decoded.document.verificationMethods,
+      });
+    }
+  }
+
+  const dids = Array.from(records.values());
+  const usableDids = dids.filter((record) => record.ok === true);
+  if (usableDids.length === 0) {
+    return {
+      ok: false,
+      code: "wallet_did_not_found",
+      message: "No DID was found for the connected wallet on testnet.",
+      dids,
+    };
+  }
+
+  return {
+    ok: true,
+    did: readUnknownString(usableDids[0].did),
+    dids: usableDids,
+    selectedAutomatically: usableDids.length === 1,
   };
 }
 
@@ -478,6 +542,45 @@ function serializeScript(script: ccc.Script): Record<string, string> {
     hashType: script.hashType,
     args: script.args,
   };
+}
+
+function readScriptArray(value: unknown): ccc.Script[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new ApiError(
+      400,
+      "wallet_locks_invalid",
+      "Connected wallet did not provide the required CKB script details",
+    );
+  }
+
+  return value.map((entry) => readScript(entry));
+}
+
+function readScript(value: unknown): ccc.Script {
+  if (!isRecord(value)) {
+    throw new ApiError(
+      400,
+      "wallet_lock_invalid",
+      "Connected wallet script details must be an object",
+    );
+  }
+  const codeHash = requireString(value, "codeHash");
+  const hashType = requireString(value, "hashType");
+  const args = requireString(value, "args");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(codeHash)) {
+    throw new ApiError(400, "wallet_lock_invalid", "Wallet script code hash is invalid");
+  }
+  if (!["data", "data1", "data2", "type"].includes(hashType)) {
+    throw new ApiError(400, "wallet_lock_invalid", "Wallet script hash type is invalid");
+  }
+  if (!/^0x([0-9a-fA-F]{2})*$/.test(args)) {
+    throw new ApiError(400, "wallet_lock_invalid", "Wallet script args are invalid");
+  }
+  return ccc.Script.from({ codeHash, hashType, args });
+}
+
+function readUnknownString(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 function stringifyCapacity(capacity: unknown): string | undefined {

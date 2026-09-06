@@ -63,13 +63,12 @@ describe("demo server", () => {
     const script = await scriptResponse.text();
 
     expect(pageResponse.headers.get("content-type")).toContain("text/html");
-    expect(page).toContain("id=\"didInput\"");
-    expect(page).toContain("id=\"replayButton\"");
-    expect(page).toContain("id=\"sessionOutput\"");
+    expect(page).toContain("Wallet-first DID demo");
+    expect(page).toContain("CCC wallet connection");
+    expect(page).not.toContain("id=\"didInput\"");
     expect(page).not.toContain("Submit Wallet Proof");
     expect(scriptResponse.headers.get("content-type")).toContain("text/javascript");
-    expect(script).toContain("/api/nonce");
-    expect(script).toContain("/api/verify");
+    expect(script).toContain("demoLink");
     expect(script).not.toContain("mode: \"wallet\"");
     expect(script).not.toContain("localStorage");
   });

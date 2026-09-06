@@ -10,10 +10,11 @@ configured.
 
 ## H3 - Passkey Registration And DID Update
 
-H3 is not passed yet because the live gate has not been executed. The implementation can register a
-browser passkey, parse its attestation object, require COSE ES256/P-256, compress the public key,
-encode `did:key:zDna...`, require proof-of-possession before offering the key for update, prepare a
-`transferDidCkb` DID update, submit it through the DID controller flow, and re-resolve
+H3 is not passed yet because the live gate has not been executed. The implementation can connect a
+CCC-supported wallet, resolve the DID owned by that wallet, register a browser passkey, parse its
+attestation object, require COSE ES256/P-256, compress the public key, encode `did:key:zDna...`,
+require proof-of-possession before offering the key for update, prepare a `transferDidCkb` DID
+update, submit it after wallet approval, and re-resolve
 `verificationMethods["auth-1"]` byte-for-byte. Local unit tests cover COSE conversion, DID update
 transformation, software/WebAuthn signature verification, and the round-trip checker. The supplied
 live DID is available through `CKB_PASSPORT_LIVE_DID`, but the missing H3 evidence is still live:
@@ -70,7 +71,8 @@ reintroduce address disclosure, while registering a wallet spend public key as a
 blur the control key and auth key roles. The fallback is now a locally generated P-256 software auth
 key stored in IndexedDB. It derives `did:key:zDna...`, proves possession before registration, and
 signs SIWD messages with `mode: "software"`. This is lower assurance than a passkey but keeps login
-address-free and transaction-free.
+address-free and transaction-free. The current demo UI keeps passkey registration as the primary
+path and uses CCC wallet approval only for DID updates.
 
 ## Resolver And SDK Findings
 

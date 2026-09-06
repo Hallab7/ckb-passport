@@ -21,7 +21,7 @@ Registration/update path:
 
 | Area | Result |
 |---|---|
-| DID update routes | Next.js exposes a browser-controller EVM flow plus an optional server signer route for local scripts. |
+| DID update routes | Next.js exposes a CCC wallet approval flow plus an optional server signer route for local scripts. |
 | DID lock signer | Used only for writing the auth `did:key` into the DID document. |
 | Transaction submission | Isolated to registration/update code, not login. |
 

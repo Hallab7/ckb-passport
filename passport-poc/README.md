@@ -23,7 +23,7 @@ vectors/vectors.json    reusable positive and negative SIWD proof vectors
 - npm.
 - CKB testnet RPC access. The default public endpoint is used unless `CKB_RPC_URL` is set.
 - A platform authenticator for the browser passkey flow.
-- A testnet DID and its DID cell lock key only if you want to run the live DID update.
+- A CCC-supported wallet that owns a testnet DID if you want to run the live DID update.
 
 ## Install And Check
 
@@ -67,13 +67,13 @@ access goes through the configured testnet RPC.
 
 The page runs the live demo in order:
 
-1. Resolve the supplied testnet DID.
-2. Register a platform passkey or generate a software auth key and derive `did:key:zDna...`.
-3. Prove possession of the generated auth key before it can be written.
-4. Connect the DID controller EVM wallet and submit the DID update.
+1. Connect a CCC-supported wallet.
+2. Resolve the testnet DID owned by that wallet without pasting a DID.
+3. Register a platform passkey and prove possession of the generated `did:key:zDna...`.
+4. Approve the DID update from the connected wallet.
 5. Re-check `verificationMethods["auth-1"]` against the live DID cell.
 6. Build the Pudge explorer evidence link from the returned transaction hash.
-7. Request a nonce, sign in with the selected auth key, inspect the DID-only session, and replay the proof.
+7. Sign in with the passkey and check replay rejection.
 
 Do not connect a production funds wallet to a deployed demo. The controller wallet is used only for
 the DID update transaction; login uses the published auth key.
@@ -135,14 +135,13 @@ Current package checked: `@ckb-ccc/did-ckb@0.2.9`.
 
 ## Passkey Flow
 
-The demo page can register a platform passkey, send the attestation object to the local server, and
-receive a P-256 `did:key:zDna...`. Before the key is offered for a DID update, the browser signs a
-fresh SIWD challenge with that key and the server verifies proof-of-possession against the proposed
-`did:key`.
+The demo page connects through CCC, finds the DID owned by the connected wallet, registers a
+platform passkey, sends the attestation object to the local server, and receives a P-256
+`did:key:zDna...`. Before the key is offered for a DID update, the browser signs a fresh SIWD
+challenge with that key and the server verifies proof-of-possession against the proposed `did:key`.
 
-The Next.js UI then submits the DID update through the browser-controller flow: connect the EVM
-wallet that controls the DID OmniLock, sign the update challenge, and broadcast the
-`transferDidCkb` transaction.
+The Next.js UI then asks the connected wallet to approve the DID update and broadcasts the
+`transferDidCkb` transaction after that approval is verified.
 
 ```powershell
 npm run demo
@@ -160,13 +159,13 @@ Login does not submit a transaction. The WebAuthn assertion signs
 ## Software Auth Key Fallback
 
 Wallet login was removed in the v2 design because wallet message verification binds to a wallet
-identity and can reintroduce address disclosure. The fallback is now a locally generated P-256
-software auth key. The browser stores the extractable JWK in IndexedDB, derives
+identity and can reintroduce address disclosure. The package fallback is now a locally generated
+P-256 software auth key. The browser stores the extractable JWK in IndexedDB, derives
 `did:key:zDna...`, proves possession with a registration challenge, and later signs SIWD login
 messages with `mode: "software"`.
 
 This preserves the PoC property that login needs no wallet extension, no CKB transaction, and no
-spend key. Its storage is weaker than a passkey, so the UI treats passkeys as the primary path.
+spend key. Its storage is weaker than a passkey, so the UI keeps passkeys as the primary path.
 
 ## Testnet Drill And Evidence
 
