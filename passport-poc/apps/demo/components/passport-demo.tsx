@@ -443,20 +443,6 @@ function PassportDemoContent() {
         return;
       }
 
-      const refusal = await proveWrongKeyIsRejected(rawCredentialId);
-      setResults((current) => ({ ...current, possession: refusal }));
-      if (!refusal.ok) {
-        setResults((current) => ({
-          ...current,
-          register: {
-            ok: false,
-            code: "wrong_key_refusal_failed",
-            message: "Registration stopped because the wrong-key safety check failed.",
-          },
-        }));
-        return;
-      }
-
       const prepared = await postJson("/api/did/wallet-update/prepare", {
         did: selectedDid,
         keyId,
