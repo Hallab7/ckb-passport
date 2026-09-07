@@ -474,7 +474,6 @@ function PassportDemoContent() {
         setTxHash(readString(submitted.txHash));
         setCapacityShannons(readString(submitted.capacityShannons));
         setFeePaidShannons(readString(submitted.feePaidShannons));
-        setActiveTab("signin");
       }
 
       setResults((current) => ({
