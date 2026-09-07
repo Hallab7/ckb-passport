@@ -5,11 +5,15 @@ export type NonceRecord = {
   issuedAt: Date;
   expirationTime: Date;
   consumed: boolean;
+  reserved: boolean;
 };
 
 export type NonceConsumeResult =
   | { ok: true; record: NonceRecord }
-  | { ok: false; code: "nonce_unknown" | "nonce_expired" | "nonce_consumed" };
+  | {
+      ok: false;
+      code: "nonce_unknown" | "nonce_expired" | "nonce_consumed" | "nonce_reserved";
+    };
 
 export type NonceServiceOptions = {
   ttlMs?: number;
@@ -55,12 +59,21 @@ export class InMemoryNonceService {
       issuedAt,
       expirationTime: new Date(issuedAt.getTime() + this.ttlMs),
       consumed: false,
+      reserved: false,
     };
     this.records.set(nonce, record);
     return { ...record };
   }
 
   consume(nonce: string): NonceConsumeResult {
+    const reserved = this.reserve(nonce);
+    if (!reserved.ok) {
+      return reserved;
+    }
+    return this.commit(nonce);
+  }
+
+  reserve(nonce: string): NonceConsumeResult {
     const record = this.records.get(nonce);
     if (!record) {
       return { ok: false, code: "nonce_unknown" };
@@ -68,13 +81,42 @@ export class InMemoryNonceService {
     if (record.consumed) {
       return { ok: false, code: "nonce_consumed" };
     }
+    if (record.reserved) {
+      return { ok: false, code: "nonce_reserved" };
+    }
     if (this.now().getTime() >= record.expirationTime.getTime()) {
       record.consumed = true;
       return { ok: false, code: "nonce_expired" };
     }
 
+    record.reserved = true;
+    return { ok: true, record: { ...record } };
+  }
+
+  commit(nonce: string): NonceConsumeResult {
+    const record = this.records.get(nonce);
+    if (!record) {
+      return { ok: false, code: "nonce_unknown" };
+    }
+    if (record.consumed) {
+      return { ok: false, code: "nonce_consumed" };
+    }
+    if (!record.reserved) {
+      return { ok: false, code: "nonce_unknown" };
+    }
+
+    record.reserved = false;
     record.consumed = true;
     return { ok: true, record: { ...record } };
+  }
+
+  release(nonce: string): boolean {
+    const record = this.records.get(nonce);
+    if (!record || record.consumed || !record.reserved) {
+      return false;
+    }
+    record.reserved = false;
+    return true;
   }
 
   get(nonce: string): NonceRecord | undefined {
@@ -94,4 +136,3 @@ export function generateNonce(length = DEFAULT_NONCE_LENGTH): string {
   }
   return nonce;
 }
-

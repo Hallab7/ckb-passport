@@ -13,6 +13,7 @@ describe("InMemoryNonceService", () => {
       issuedAt: now,
       expirationTime: new Date("2026-09-04T08:01:00Z"),
       consumed: false,
+      reserved: false,
     });
   });
 
@@ -22,6 +23,24 @@ describe("InMemoryNonceService", () => {
 
     expect(service.consume("abc123DEF456").ok).toBe(true);
     expect(service.consume("abc123DEF456")).toEqual({
+      ok: false,
+      code: "nonce_consumed",
+    });
+  });
+
+  it("reserves, releases, and commits a nonce", () => {
+    const service = new InMemoryNonceService();
+    service.issue("abc123DEF456");
+
+    expect(service.reserve("abc123DEF456").ok).toBe(true);
+    expect(service.reserve("abc123DEF456")).toEqual({
+      ok: false,
+      code: "nonce_reserved",
+    });
+    expect(service.release("abc123DEF456")).toBe(true);
+    expect(service.reserve("abc123DEF456").ok).toBe(true);
+    expect(service.commit("abc123DEF456").ok).toBe(true);
+    expect(service.reserve("abc123DEF456")).toEqual({
       ok: false,
       code: "nonce_consumed",
     });
@@ -76,4 +95,3 @@ describe("InMemoryNonceService", () => {
     );
   });
 });
-

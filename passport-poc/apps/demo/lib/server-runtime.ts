@@ -137,77 +137,97 @@ export async function verifyAuthKeyProofOfPossession(
     };
   }
 
-  if (messageChecks.fields.did !== did) {
-    return {
-      ok: false,
-      code: "proof_did_mismatch",
-      message: "Proof DID must match the DID receiving this auth key",
-      did,
-      keyId,
-      didKey,
-    };
-  }
-  if (messageChecks.fields.keyId !== keyId) {
-    return {
-      ok: false,
-      code: "proof_key_id_mismatch",
-      message: "Proof key ID must match the DID document key ID",
-      did,
-      keyId,
-      didKey,
-    };
-  }
-
-  let decoded: ReturnType<typeof decodeDidKey>;
+  let nonceCommitted = false;
   try {
-    decoded = decodeDidKey(didKey);
-  } catch (error) {
+    if (messageChecks.fields.did !== did) {
+      return {
+        ok: false,
+        code: "proof_did_mismatch",
+        message: "Proof DID must match the DID receiving this auth key",
+        did,
+        keyId,
+        didKey,
+      };
+    }
+    if (messageChecks.fields.keyId !== keyId) {
+      return {
+        ok: false,
+        code: "proof_key_id_mismatch",
+        message: "Proof key ID must match the DID document key ID",
+        did,
+        keyId,
+        didKey,
+      };
+    }
+
+    let decoded: ReturnType<typeof decodeDidKey>;
+    try {
+      decoded = decodeDidKey(didKey);
+    } catch (error) {
+      return {
+        ok: false,
+        code: "did_key_invalid",
+        message:
+          error instanceof Error ? error.message : "did:key could not be decoded",
+        did,
+        keyId,
+        didKey,
+      };
+    }
+
+    const verificationMethod = {
+      ok: true as const,
+      keyId,
+      didKey,
+      decoded,
+    };
+    const signature =
+      messageChecks.proof.mode === "software"
+        ? verifySoftwareSignature({
+            proof: messageChecks.proof,
+            verificationMethod,
+          })
+        : verifyWebAuthnSignature({
+            proof: messageChecks.proof,
+            verificationMethod,
+            expectedOrigin: config.expectedOrigin,
+            rpId: new URL(config.expectedOrigin).hostname,
+          });
+
+    if (!signature.ok) {
+      return {
+        ...signature,
+        did,
+        keyId,
+        didKey,
+      };
+    }
+
+    const committed = nonceService.commit(messageChecks.fields.nonce);
+    if (!committed.ok) {
+      return {
+        ok: false,
+        code: committed.code,
+        message: `Nonce commit failed: ${committed.code}`,
+        did,
+        keyId,
+        didKey,
+      };
+    }
+    nonceCommitted = true;
+
     return {
-      ok: false,
-      code: "did_key_invalid",
-      message:
-        error instanceof Error ? error.message : "did:key could not be decoded",
+      ok: true,
       did,
       keyId,
       didKey,
+      mode: messageChecks.proof.mode,
     };
+  } finally {
+    if (!nonceCommitted) {
+      nonceService.release(messageChecks.fields.nonce);
+    }
   }
-
-  const verificationMethod = {
-    ok: true as const,
-    keyId,
-    didKey,
-    decoded,
-  };
-  const signature =
-    messageChecks.proof.mode === "software"
-      ? verifySoftwareSignature({
-          proof: messageChecks.proof,
-          verificationMethod,
-        })
-      : verifyWebAuthnSignature({
-          proof: messageChecks.proof,
-          verificationMethod,
-          expectedOrigin: config.expectedOrigin,
-          rpId: new URL(config.expectedOrigin).hostname,
-        });
-
-  if (!signature.ok) {
-    return {
-      ...signature,
-      did,
-      keyId,
-      didKey,
-    };
-  }
-
-  return {
-    ok: true,
-    did,
-    keyId,
-    didKey,
-    mode: messageChecks.proof.mode,
-  };
 }
 
 export async function resolveDidForUi(

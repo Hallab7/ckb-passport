@@ -22,7 +22,7 @@ const baseFields: SiwdMessageFields = {
 };
 
 describe("verifySiwdMessageChecks", () => {
-  it("accepts a valid proof and consumes the nonce", () => {
+  it("accepts message checks and reserves the nonce", () => {
     const nonceService = nonceStore(baseFields.nonce);
     const result = verifySiwdMessageChecks({
       proof: proofFor(baseFields),
@@ -39,10 +39,11 @@ describe("verifySiwdMessageChecks", () => {
         keyId: baseFields.keyId,
       },
     });
-    expect(nonceService.consume(baseFields.nonce)).toEqual({
+    expect(nonceService.reserve(baseFields.nonce)).toEqual({
       ok: false,
-      code: "nonce_consumed",
+      code: "nonce_reserved",
     });
+    expect(nonceService.release(baseFields.nonce)).toBe(true);
   });
 
   it("rejects a wrong domain", () => {
@@ -85,15 +86,15 @@ describe("verifySiwdMessageChecks", () => {
 
   it("rejects replayed nonces", () => {
     const nonceService = nonceStore(baseFields.nonce);
-    expect(
-      verifySiwdMessageChecks({
+    const first = verifySiwdMessageChecks({
         proof: proofFor(baseFields),
         expectedOrigin,
         expectedNetwork: "ckb-testnet",
         nonceService,
         now,
-      }),
-    ).toMatchObject({ ok: true });
+      });
+    expect(first).toMatchObject({ ok: true });
+    expect(nonceService.commit(baseFields.nonce).ok).toBe(true);
 
     expect(
       verifySiwdMessageChecks({

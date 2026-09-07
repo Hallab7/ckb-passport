@@ -60,40 +60,57 @@ export async function verifySiwdProof(
     return messageChecks;
   }
 
-  const keyChecks = await verifySiwdKeyChecks({
-    client: options.client,
-    did: messageChecks.fields.did,
-    keyId: messageChecks.fields.keyId,
-  });
-  if (!keyChecks.ok) {
+  let nonceCommitted = false;
+  try {
+    const keyChecks = await verifySiwdKeyChecks({
+      client: options.client,
+      did: messageChecks.fields.did,
+      keyId: messageChecks.fields.keyId,
+    });
+    if (!keyChecks.ok) {
+      return {
+        ok: false,
+        code: keyChecks.code,
+        message: keyChecks.message,
+      };
+    }
+
+    const signature =
+      messageChecks.proof.mode === "software"
+        ? verifySoftwareSignature({
+            proof: messageChecks.proof,
+            verificationMethod: keyChecks.verificationMethod,
+          })
+        : verifyWebAuthnSignature({
+            proof: messageChecks.proof,
+            verificationMethod: keyChecks.verificationMethod,
+            expectedOrigin: options.expectedOrigin,
+            rpId: options.rpId ?? new URL(options.expectedOrigin).hostname,
+          });
+
+    if (!signature.ok) {
+      return signature;
+    }
+
+    const committed = options.nonceService.commit(messageChecks.fields.nonce);
+    if (!committed.ok) {
+      return {
+        ok: false,
+        code: committed.code,
+        message: `nonce commit failed: ${committed.code}`,
+      };
+    }
+    nonceCommitted = true;
+
     return {
-      ok: false,
-      code: keyChecks.code,
-      message: keyChecks.message,
+      ok: true,
+      did: messageChecks.fields.did,
+      keyId: messageChecks.fields.keyId,
+      mode: messageChecks.proof.mode,
     };
+  } finally {
+    if (!nonceCommitted) {
+      options.nonceService.release(messageChecks.fields.nonce);
+    }
   }
-
-  const signature =
-    messageChecks.proof.mode === "software"
-      ? verifySoftwareSignature({
-          proof: messageChecks.proof,
-          verificationMethod: keyChecks.verificationMethod,
-        })
-      : verifyWebAuthnSignature({
-          proof: messageChecks.proof,
-          verificationMethod: keyChecks.verificationMethod,
-          expectedOrigin: options.expectedOrigin,
-          rpId: options.rpId ?? new URL(options.expectedOrigin).hostname,
-        });
-
-  if (!signature.ok) {
-    return signature;
-  }
-
-  return {
-    ok: true,
-    did: messageChecks.fields.did,
-    keyId: messageChecks.fields.keyId,
-    mode: messageChecks.proof.mode,
-  };
 }

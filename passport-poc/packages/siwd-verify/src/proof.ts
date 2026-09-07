@@ -31,7 +31,9 @@ export type WebAuthnSiwdProofEnvelope = BaseSiwdProofEnvelope & {
 export type SiwdProofEnvelope = SoftwareSiwdProofEnvelope | WebAuthnSiwdProofEnvelope;
 
 export type NonceConsumer = {
-  consume(nonce: string): NonceConsumeResult;
+  reserve(nonce: string): NonceConsumeResult;
+  commit(nonce: string): NonceConsumeResult;
+  release(nonce: string): boolean;
 };
 
 export type VerifySiwdMessageChecksOptions = {
@@ -50,7 +52,8 @@ export type VerifySiwdMessageChecksFailureCode =
   | SiwdFieldValidationFailureCode
   | "nonce_unknown"
   | "nonce_expired"
-  | "nonce_consumed";
+  | "nonce_consumed"
+  | "nonce_reserved";
 
 export type VerifySiwdMessageChecksResult =
   | {
@@ -114,7 +117,7 @@ export function verifySiwdMessageChecks(
     };
   }
 
-  const nonce = options.nonceService.consume(fields.nonce);
+  const nonce = options.nonceService.reserve(fields.nonce);
   if (!nonce.ok) {
     return {
       ok: false,
