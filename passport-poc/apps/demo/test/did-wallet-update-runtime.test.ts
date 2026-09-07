@@ -188,6 +188,10 @@ function fakeClient(
       }
     },
     sendTransaction,
+    waitTransaction: async () => ({
+      blockNumber: 123n,
+      status: "committed",
+    }),
   } as unknown as ccc.Client;
 }
 

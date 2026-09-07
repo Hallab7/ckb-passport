@@ -20,10 +20,12 @@ Required scenes:
 | Scene | Current status |
 |---|---|
 | Tests passing | Available from local command output, not recorded. |
-| Auth-key registration with proof-of-possession or exact H3 failure | Available in the Next.js UI, not recorded. |
-| DID update or exact update blocker | Available in the Next.js UI, not recorded. |
-| Session contents after sign-in | Available in the Next.js UI, not recorded. |
-| Identical proof replay rejected | Covered by local vectors and drill harness, not recorded live. |
+| Profile 1 connects a CCC wallet and lists every owned DID | Available in the Next.js UI, not recorded. |
+| Passkey proof-of-possession succeeds and a deliberately wrong key is refused before transaction preparation | Available in the Next.js UI, not recorded. |
+| Confirmed DID update hash, explorer page, and exact `auth-1` round trip | Available in the Next.js UI, not recorded. |
+| Profile 2 has no wallet extension and signs in after entering only the DID | Available in the Next.js UI, not recorded. |
+| Session visibly contains DID and key ID with no address field | Available in the Next.js UI, not recorded. |
+| The same proof is rejected at another origin and on replay, with failure steps shown | Available in the Next.js UI and vectors, not recorded live. |
 
 Current blocker: no captured auth `did:key`, controller-signed update transaction hash,
 captured live proof file, or local browser recording file is available in this checkout.

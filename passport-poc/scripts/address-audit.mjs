@@ -6,6 +6,7 @@ const loginFiles = [
   "apps/demo/app/api/auth-key/proof-of-possession/route.ts",
   "apps/demo/app/api/nonce/route.ts",
   "apps/demo/app/api/verify/route.ts",
+  "apps/demo/app/api/verify/cross-origin/route.ts",
   "apps/demo/app/api/session/route.ts",
   "apps/demo/app/api/session/clear/route.ts",
   "apps/demo/components/passport-demo.tsx",

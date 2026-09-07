@@ -20,6 +20,8 @@ Current result:
 | `verificationMethods["auth-1"]` begins `did:key:zDna` on explorer | Unresolved | Requires update transaction hash and explorer evidence. |
 | Sign-in works with platform authenticator only | Unresolved | Requires live browser recording after DID update. |
 | Server session contains DID and no address | Pass | `npm run audit:h4` passes. |
+| Sign-in can run without connecting a wallet | Pass locally | The Sign In tab accepts a DID independently and uses a discoverable platform passkey; fresh-profile recording remains unresolved. |
+| Cross-origin proof is rejected | Pass locally | The UI presents each sign-in proof to `/api/verify/cross-origin` before valid verification and displays the failure step; live recording remains unresolved. |
 | Replay of identical proof is rejected | Pass | `vectors.json` includes `replayed-nonce` expecting `nonce_consumed`. |
 | Synthetic duplicate live DID cells are rejected | Pass | `resolver.test.ts` covers `did_ambiguous`; `vectors.json` includes `duplicate-cells`. |
 | One command runs the complete vector matrix | Pass | `npm run test:vectors` runs all 23 proof-plan cases and validates each failure step. |

@@ -53,7 +53,9 @@ type TabKey = "resolve" | "register" | "signin" | "explorer";
 type StageKey =
   | "resolve"
   | "register"
+  | "possession"
   | "signin"
+  | "crossOrigin"
   | "replay"
   | "roundtrip"
   | "explorer";
@@ -62,6 +64,7 @@ type BusyAction =
   | "connect"
   | "resolve"
   | "register"
+  | "possession"
   | "signin"
   | "replay"
   | "roundtrip"
@@ -106,10 +109,20 @@ function initialResults(): Record<StageKey, JsonRecord> {
       code: "idle",
       message: "Resolve your DID before registering a passkey.",
     },
+    possession: {
+      ok: false,
+      code: "idle",
+      message: "Create a passkey before testing wrong-key refusal.",
+    },
     signin: {
       ok: false,
       code: "idle",
       message: "Register a passkey before signing in.",
+    },
+    crossOrigin: {
+      ok: false,
+      code: "idle",
+      message: "Sign in once to test origin binding.",
     },
     replay: {
       ok: false,
@@ -151,6 +164,7 @@ function PassportDemoContent() {
   const [walletProfile, setWalletProfile] = useState<WalletProfile | null>(null);
   const [availableDids, setAvailableDids] = useState<DidOption[]>([]);
   const [did, setDid] = useState("");
+  const [signInDid, setSignInDid] = useState("");
   const [keyId, setKeyId] = useState(INITIAL_KEY_ID);
   const [didKey, setDidKey] = useState("");
   const [credentialId, setCredentialId] = useState("");
@@ -204,6 +218,7 @@ function PassportDemoContent() {
 
   const expectedOriginUrl = config?.expectedOrigin ?? "http://localhost:3000";
   const selectedDid = did.trim();
+  const signInDidValue = signInDid.trim();
   const activeTabDetails = TABS.find((tab) => tab.key === activeTab) ?? TABS[0];
   const selectedDidOption = availableDids.find((option) => option.did === selectedDid);
   const resolvedMethods = readRecord(selectedDidOption?.verificationMethods);
@@ -219,9 +234,12 @@ function PassportDemoContent() {
     readString(results.register.txHash) ||
     readString(results.explorer.updateTransactionHash);
   const walletConnected = Boolean(walletProfile && signer);
+  const sessionRecord = readRecord(results.signin.session);
+  const sessionHasAddress = Boolean(
+    sessionRecord && Object.prototype.hasOwnProperty.call(sessionRecord, "address"),
+  );
   const didResolved = walletConnected && selectedDid.length > 0 && results.resolve.ok === true;
   const hasRegisteredPasskey = displayDidKey.startsWith("did:key:zDna");
-  const hasLocalCredential = credentialId.length > 0 || hasRegisteredPasskey;
   const hasTxHash = /^0x[0-9a-fA-F]{64}$/.test(displayTxHash);
   const canRegister = Boolean(
     signer &&
@@ -231,6 +249,7 @@ function PassportDemoContent() {
       domainReady &&
       walletProfile.identity,
   );
+  const canSignIn = /^did:ckb:[a-z2-7]{32}$/.test(signInDidValue);
 
   async function loadConfig() {
     setBusy("config");
@@ -329,6 +348,9 @@ function PassportDemoContent() {
 
   function applyDidSelection(selected: DidOption | undefined) {
     setDid(selected?.did ?? "");
+    if (selected?.did) {
+      setSignInDid(selected.did);
+    }
     setCapacityShannons(selected?.capacityShannons ?? "");
     const methods = readRecord(selected?.verificationMethods);
     setDidKey(methods ? readString(methods[keyId]) : "");
@@ -359,8 +381,9 @@ function PassportDemoContent() {
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
           authenticatorSelection: {
-            residentKey: "preferred",
-            userVerification: "preferred",
+            authenticatorAttachment: "platform",
+            residentKey: "required",
+            userVerification: "required",
           },
           timeout: 60_000,
           attestation: "direct",
@@ -382,6 +405,9 @@ function PassportDemoContent() {
         return;
       }
 
+      setCredentialId(bytesToBase64Url(new Uint8Array(credential.rawId)));
+      setDidKey(nextDidKey);
+
       const rawCredentialId = new Uint8Array(credential.rawId);
       const nonceBody = await requestAuthNonce();
       const proofMessage = readString(nonceBody.message);
@@ -395,6 +421,7 @@ function PassportDemoContent() {
         message: proofMessage,
         rpId: config.rpId,
         credentialId: rawCredentialId,
+        userVerification: "required",
       });
       const proofOfPossession = await postJson(
         "/api/auth-key/proof-of-possession",
@@ -411,6 +438,20 @@ function PassportDemoContent() {
           register: {
             ...proofOfPossession,
             message: friendlyError(proofOfPossession),
+          },
+        }));
+        return;
+      }
+
+      const refusal = await proveWrongKeyIsRejected(rawCredentialId);
+      setResults((current) => ({ ...current, possession: refusal }));
+      if (!refusal.ok) {
+        setResults((current) => ({
+          ...current,
+          register: {
+            ok: false,
+            code: "wrong_key_refusal_failed",
+            message: "Registration stopped because the wrong-key safety check failed.",
           },
         }));
         return;
@@ -461,35 +502,106 @@ function PassportDemoContent() {
     });
   }
 
-  async function requestAuthNonce(): Promise<JsonRecord> {
+  async function checkPossessionRefusal() {
+    if (!config || !selectedDid || !credentialId || !didKey) {
+      return;
+    }
+
+    await run("possession", "possession", async () => {
+      requireWebAuthn(config, domainReady);
+      const result = await proveWrongKeyIsRejected(
+        new Uint8Array(base64UrlToBuffer(credentialId)),
+      );
+      setResults((current) => ({
+        ...current,
+        possession: result,
+      }));
+    });
+  }
+
+  async function proveWrongKeyIsRejected(
+    activeCredentialId: Uint8Array,
+  ): Promise<JsonRecord> {
+    if (!config) {
+      throw new Error("The demo server is still loading.");
+    }
+    const nonceBody = await requestAuthNonce(selectedDid);
+    const message = readString(nonceBody.message);
+    if (!message) {
+      throw new Error("The server could not prepare the refusal check.");
+    }
+    const proof = await createPasskeyProof({
+      did: selectedDid,
+      keyId,
+      message,
+      rpId: config.rpId,
+      credentialId: activeCredentialId,
+      userVerification: "required",
+    });
+    const rejected = await postJson("/api/auth-key/proof-of-possession", {
+      did: selectedDid,
+      keyId,
+      didKey: "did:key:zDnaemkA1YkSdpbtH9NZ3JyCw9tZBWd8sywQhTx4N7SuFSvGU",
+      proof,
+    });
+    const refused =
+      rejected.ok === false &&
+      readString(rejected.code) === "signature_verification_failed";
+    return refused
+      ? {
+          ok: true,
+          code: "wrong_key_refused",
+          message: "Registration stopped before a transaction was built.",
+          failsAtStep: readString(rejected.failsAtStep),
+        }
+      : {
+          ok: false,
+          code: "wrong_key_accepted",
+          message: "The wrong-key proof was not rejected as expected.",
+          failsAtStep: "",
+        };
+  }
+
+  async function requestAuthNonce(didValue = selectedDid): Promise<JsonRecord> {
     return getJson(
-      `/api/nonce?did=${encodeURIComponent(selectedDid)}&keyId=${encodeURIComponent(keyId)}`,
+      `/api/nonce?did=${encodeURIComponent(didValue)}&keyId=${encodeURIComponent(keyId)}`,
     );
   }
 
   async function signInWithRegisteredPasskey() {
-    if (!config || !selectedDid || !hasRegisteredPasskey) {
+    if (!config || !canSignIn) {
       return;
     }
 
     await run("signin", "signin", async () => {
       requireWebAuthn(config, domainReady);
-      const nonceBody = await requestAuthNonce();
+      const nonceBody = await requestAuthNonce(signInDidValue);
       const proofMessage = readString(nonceBody.message);
       if (!proofMessage) {
         throw new Error("The server could not prepare sign-in.");
       }
 
       const proof = await createPasskeyProof({
-        did: selectedDid,
+        did: signInDidValue,
         keyId,
         message: proofMessage,
         rpId: config.rpId,
         credentialId: credentialId
           ? new Uint8Array(base64UrlToBuffer(credentialId))
           : undefined,
+        userVerification: "required",
       });
       setLastProof(proof);
+      const crossOrigin = await postJson("/api/verify/cross-origin", { proof });
+      setResults((current) => ({ ...current, crossOrigin }));
+      if (
+        crossOrigin.ok ||
+        readString(crossOrigin.code) !== "domain_mismatch"
+      ) {
+        throw new Error(
+          "The cross-origin check did not fail at the expected domain-binding step.",
+        );
+      }
       const body = await postJson("/api/verify", { proof });
       setResults((current) => ({ ...current, signin: body }));
     });
@@ -791,16 +903,32 @@ function PassportDemoContent() {
             <TaskPanel
               eyebrow="Register"
               title="Add a passkey to your DID"
-              status={<StatusCard stage="register" result={results.register} />}
+              status={
+                <>
+                  <StatusCard stage="register" result={results.register} />
+                  <StatusCard stage="possession" result={results.possession} compact />
+                </>
+              }
               actions={
-                <ActionButton
-                  icon={<Fingerprint size={16} />}
-                  label="Register Passkey"
-                  title="Create passkey and approve wallet update"
-                  busy={busy === "register"}
-                  onClick={registerPasskeyWithWallet}
-                  disabled={!canRegister}
-                />
+                <>
+                  <ActionButton
+                    icon={<Fingerprint size={16} />}
+                    label="Register Passkey"
+                    title="Create passkey and approve wallet update"
+                    busy={busy === "register"}
+                    onClick={registerPasskeyWithWallet}
+                    disabled={!canRegister}
+                  />
+                  <ActionButton
+                    icon={<ShieldCheck size={16} />}
+                    label="Test Wrong Key"
+                    title="Confirm registration refuses a key the passkey does not control"
+                    busy={busy === "possession"}
+                    onClick={checkPossessionRefusal}
+                    disabled={!credentialId || !didKey || !selectedDid}
+                    variant="secondary"
+                  />
+                </>
               }
             >
               <InfoGrid>
@@ -853,6 +981,7 @@ function PassportDemoContent() {
               status={
                 <>
                   <StatusCard stage="signin" result={results.signin} />
+                  <StatusCard stage="crossOrigin" result={results.crossOrigin} compact />
                   <StatusCard stage="replay" result={results.replay} compact />
                 </>
               }
@@ -864,7 +993,7 @@ function PassportDemoContent() {
                     title="Sign in with passkey"
                     busy={busy === "signin"}
                     onClick={signInWithRegisteredPasskey}
-                    disabled={!domainReady || !hasRegisteredPasskey || !hasLocalCredential}
+                    disabled={!domainReady || !canSignIn}
                   />
                   <ActionButton
                     icon={<RotateCcw size={16} />}
@@ -879,28 +1008,50 @@ function PassportDemoContent() {
               }
             >
               <InfoGrid>
-                <InfoItem
+                <TextField
                   label="DID"
-                  value={selectedDid}
-                  empty="Resolve first"
-                  mono
-                  onCopy={() => copyValue("signinDid", selectedDid)}
-                  copied={copied === "signinDid"}
+                  value={signInDid}
+                  placeholder="did:ckb:..."
+                  onChange={setSignInDid}
                 />
                 <InfoItem
                   label="Passkey"
-                  value={hasRegisteredPasskey ? "Ready" : ""}
-                  empty="Register first"
+                  value={canSignIn ? "Selected by this browser" : ""}
+                  empty="Enter a DID first"
                 />
                 <InfoItem
-                  label="Session"
-                  value={results.signin.ok ? "Signed in" : ""}
+                  label="Session DID"
+                  value={sessionRecord ? readString(sessionRecord.did) : ""}
                   empty="Not signed in"
+                  mono
                 />
                 <InfoItem
-                  label="Replay check"
-                  value={results.replay.ok === false && readString(results.replay.code) !== "idle" ? "Protected" : ""}
+                  label="Session key"
+                  value={sessionRecord ? readString(sessionRecord.keyId) : ""}
+                  empty="Not signed in"
+                  mono
+                />
+                <InfoItem
+                  label="Wallet address in session"
+                  value={
+                    results.signin.ok
+                      ? sessionHasAddress
+                        ? "Present - proof failed"
+                        : "Not present"
+                      : ""
+                  }
                   empty="Not checked"
+                />
+                <InfoItem
+                  label="Origin and replay"
+                  value={
+                    results.crossOrigin.ok === false &&
+                    results.replay.ok === false &&
+                    readString(results.replay.code) !== "idle"
+                      ? "Both protected"
+                      : ""
+                  }
+                  empty="Not fully checked"
                 />
               </InfoGrid>
             </TaskPanel>
@@ -1064,6 +1215,32 @@ function InfoItem({
   );
 }
 
+function TextField({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="info-item text-field">
+      <span>{label}</span>
+      <input
+        className="mono"
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete="off"
+        spellCheck={false}
+      />
+    </label>
+  );
+}
+
 function ProgressItem({
   done,
   title,
@@ -1199,11 +1376,27 @@ function friendlyStatus(
     };
   }
 
-  if (stage === "replay" && result.ok === false) {
+  if (
+    stage === "replay" &&
+    result.ok === false &&
+    readString(result.code) === "nonce_consumed"
+  ) {
     return {
       tone: "success",
       title: "Replay protection works",
       description: "The old sign-in proof was rejected, as expected.",
+    };
+  }
+
+  if (
+    stage === "crossOrigin" &&
+    result.ok === false &&
+    readString(result.code) === "domain_mismatch"
+  ) {
+    return {
+      tone: "success",
+      title: "Cross-origin proof rejected",
+      description: `The proof was refused at verifier step ${readString(result.failsAtStep) || "2"}.`,
     };
   }
 
@@ -1237,12 +1430,24 @@ function successStatus(
         description:
           "The wallet approved the update and the passkey is now linked to the DID.",
       };
+    case "possession":
+      return {
+        tone: "success",
+        title: "Wrong key refused",
+        description: `Registration stopped at verifier step ${readString(result.failsAtStep) || "12a / 12h"}, before transaction preparation.`,
+      };
     case "signin":
       return {
         tone: "success",
         title: "Signed in",
         description:
           "The passkey matched the DID document and a browser session was created.",
+      };
+    case "crossOrigin":
+      return {
+        tone: "success",
+        title: "Origin binding works",
+        description: "The proof cannot be used by a different application origin.",
       };
     case "roundtrip":
       return {
@@ -1271,8 +1476,12 @@ function idleTitle(stage: StageKey): string {
       return "Wallet not checked";
     case "register":
       return "Passkey not registered";
+    case "possession":
+      return "Wrong-key refusal not checked";
     case "signin":
       return "Not signed in";
+    case "crossOrigin":
+      return "Origin binding not checked";
     case "replay":
       return "Replay not checked";
     case "roundtrip":
@@ -1288,8 +1497,12 @@ function errorTitle(stage: StageKey): string {
       return "DID was not found";
     case "register":
       return "Registration stopped";
+    case "possession":
+      return "Wrong-key refusal failed";
     case "signin":
       return "Sign-in failed";
+    case "crossOrigin":
+      return "Cross-origin check failed";
     case "replay":
       return "Replay check failed";
     case "roundtrip":
@@ -1316,7 +1529,7 @@ function friendlyError(result: JsonRecord): string {
   if (code === "origin_mismatch" || code === "domain_mismatch") {
     return "The passkey request came from the wrong domain for this demo.";
   }
-  if (code === "nonce_replayed") {
+  if (code === "nonce_replayed" || code === "nonce_consumed") {
     return "That sign-in proof was already used.";
   }
   return readString(result.message) || "Something went wrong. Please try again.";

@@ -261,6 +261,12 @@ export async function submitWalletDidUpdate({
       normalizeRecoverableEvmSignature(signature),
     );
     const txHash = await client.sendTransaction(challenge.tx);
+    const confirmedTransaction = await client.waitTransaction(
+      txHash,
+      0,
+      120_000,
+      2_000,
+    );
     store.delete(challengeId);
 
     return {
@@ -271,6 +277,11 @@ export async function submitWalletDidUpdate({
         keyId: challenge.keyId,
         didKey: challenge.didKey,
         txHash,
+        confirmed: true,
+        blockNumber:
+          confirmedTransaction?.blockNumber == null
+            ? null
+            : confirmedTransaction.blockNumber.toString(),
         capacityShannons: challenge.capacityShannons,
         feeRateShannonsPerKw: challenge.feeRateShannonsPerKw,
         feePaidShannons: challenge.feePaidShannons,

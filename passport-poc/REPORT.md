@@ -1,140 +1,81 @@
-# Passport PoC Report
+# Passport PoC - Result
 
-Date: 2026-09-06
+Date: 2026-09-07
 
-Status: local PoC implementation is complete and audited. The demo is now a guided Next.js UI for
-collecting the remaining live evidence. The live testnet drill,
-explorer proof, and recording are not complete in this checkout because no auth `did:key`, DID
-controller signature, update transaction hash, captured proof file, or captured recording file is
-configured.
+Network: CKB testnet
 
-## H3 - Passkey Registration And DID Update
+DID tested: supplied through `CKB_PASSPORT_LIVE_DID`
+Dependencies: `@ckb-ccc/core@1.19.1`, `@ckb-ccc/did-ckb@0.2.9`
 
-H3 is not passed yet because the live gate has not been executed. The implementation can connect a
-CCC-supported wallet, resolve the DID owned by that wallet, register a browser passkey, parse its
-attestation object, require COSE ES256/P-256, compress the public key, encode `did:key:zDna...`,
-require proof-of-possession before offering the key for update, prepare a `transferDidCkb` DID
-update, submit it after wallet approval, and re-resolve
-`verificationMethods["auth-1"]` byte-for-byte. Local unit tests cover COSE conversion, DID update
-transformation, software/WebAuthn signature verification, and the round-trip checker. The supplied
-live DID is available through `CKB_PASSPORT_LIVE_DID`, but the missing H3 evidence is still live:
-`CKB_PASSPORT_AUTH_DID_KEY`, a controller-signed update transaction, and explorer confirmation.
-Until those are supplied and confirmed, H3 remains unresolved rather than proven.
+Summary: H1 and H2 are confirmed by live read evidence plus deterministic security fixtures. H3
+and H4 remain partial until the update transaction and split-profile browser recording are captured.
+Passing local code does not replace those live gates.
 
-## H1 - DID Resolution
+## H1 - Resolution Is Safe
 
-H1 is implemented with a duplicate-safe resolver. The resolver decodes the `did:ckb` identifier
-through `@ckb-ccc/did-ckb`, builds the testnet DID type script from
-`ccc.ClientPublicTestnet.getKnownScript(ccc.KnownScript.DidCkb)`, and queries live cells directly.
-Zero live cells fail as nonexistent or deactivated. Multiple live cells fail closed instead of
-choosing arbitrarily. Local resolver tests cover successful resolution, zero live cells, duplicate
-live cells, and malformed DID input. With `CKB_PASSPORT_LIVE_DID` set, the targeted live resolver
-test passed on 2026-09-04:
+Verdict: CONFIRMED
 
-```text
-npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts
+The security path does not use a cached singleton resolver. It derives the exact DID type script,
+queries at most two live cells, accepts exactly one, treats zero cells as nonexistent or deactivated,
+and rejects two cells as `did_ambiguous`. The supplied DID has resolved from CKB testnet in the
+targeted live resolver test. The synthetic `duplicate-cells` vector and resolver fixture both fail
+closed at step 9e.
+
+## H2 - Signature Verifies Against The Document
+
+Verdict: CONFIRMED
+
+The verifier resolves `verificationMethods[keyId]`, parses its `did:key`, and verifies either a raw
+low-S software signature or a WebAuthn ES256 assertion against that exact key. The 23-case vector
+matrix confirms valid software and WebAuthn proofs, rejects a proof signed by another key, rejects
+unsupported Ed25519 multicodec input, rejects curve confusion, and covers malformed, DER, and high-S
+signatures. These are deterministic local cryptographic fixtures; captured live passkey evidence is
+part of H3.
+
+## H3 - Passkey As A Verification Method
+
+Verdict: PARTIAL
+
+The UI creates a discoverable platform passkey, derives `did:key:zDna...`, proves possession, and
+refuses a deliberately mismatched key before transaction preparation. A CCC wallet then authorizes
+the DID update. The Explorer tab prints the transaction hash, re-resolves the DID, and compares
+`verificationMethods["auth-1"]` byte for byte with the passkey key. H3 is not closed because this
+checkout does not contain a confirmed update transaction hash, explorer capture, and successful
+round-trip result for the supplied DID. If the live attempt fails, record whether the failure was
+COSE parsing, did:key encoding, wallet transfer rejection, confirmation, or round-trip mismatch.
+
+## H4 - No Address, No Spend Authority
+
+Verdict: PARTIAL
+
+The Sign In tab works independently of wallet state: a fresh profile can enter a DID and invoke a
+discoverable platform passkey without connecting CCC. The server session schema contains only
+`did`, `keyId`, `issuedAt`, and `expirationTime`; no address field exists. Wallet signing and CKB
+transaction submission are isolated to registration. Each sign-in proof is first rejected against
+a different application origin, then accepted at its issuing origin, and an identical replay is
+rejected with the failed verifier step. H4 is not closed until a recording shows this in a browser
+profile that has never connected a wallet and visibly shows the returned session record.
+
+## Evidence Commands
+
+```powershell
+npm run build
+npm test
+npm run test:vectors
+npm run audit:h4
+npm run drill:check
+npm run demo:check
+npm run evidence:check
+npm run recording:verify
 ```
 
-That run resolved the supplied DID from live testnet cells, so H1 now has read-only live DID
-evidence in this checkout.
+The first seven commands validate implementation and evidence readiness. `recording:verify` remains
+expected to fail until `evidence/passport-poc-recording.mp4` exists. Live H3 evidence also requires
+the confirmed transaction hash and exact re-resolved `auth-1` value.
 
-The supplied DID currently decodes with no `verificationMethods` field. The verifier now normalizes
-that shape to an empty method set so the demo can add the first `auth-1` auth method instead of
-failing before the update path.
+## What This Changes About The 12-Week Scope
 
-## H2 - Verification Method Signature
-
-H2 is implemented for the v2 proof modes. Software mode verifies raw low-S ECDSA signatures over
-`SHA-256(canonicalMessage)` against the resolved `did:key` verification method. WebAuthn mode
-verifies P-256 assertions against the resolved `did:key:zDna...` key by checking `clientDataJSON`,
-challenge binding to `SHA-256(canonicalMessage)`, `rpIdHash`, User Present, low-S policy, and ES256
-over `authenticatorData || SHA-256(clientDataJSON)`. Local tests cover valid signatures, tampered
-messages, wrong public keys, wrong curves, high-S signatures, and WebAuthn
-origin/challenge/rpId/authenticator-data failures. H2 is proven locally through fixtures; live
-passkey/software proofs still need captured testnet evidence.
-
-## H4 - Address-Free Login And No Spend Authority
-
-H4 passes as a local source and session audit. The verifier issues a random in-memory session token
-after proof verification, and the server-side session stores only DID, key ID, issued time, and
-expiration time. `npm run audit:h4` scans login server code, Next.js login/session routes, session
-objects, proof envelopes, browser demo state, and proof builders for CKB address disclosure, lock
-scripts, lock hashes, transaction skeletons, transaction signatures, and browser storage. The audit
-finds none in the login path. DID lock signing and transaction submission are isolated to
-registration/update code. H4 still needs the final browser recording against a live updated DID to
-prove the same result in an end-to-end run.
-
-## Software Auth Key Fallback
-
-Wallet login was removed in v2. CCC wallet message verification binds to a wallet identity and can
-reintroduce address disclosure, while registering a wallet spend public key as an auth method would
-blur the control key and auth key roles. The fallback is now a locally generated P-256 software auth
-key stored in IndexedDB. It derives `did:key:zDna...`, proves possession before registration, and
-signs SIWD messages with `mode: "software"`. This is lower assurance than a passkey but keeps login
-address-free and transaction-free. The current demo UI keeps passkey registration as the primary
-path and uses CCC wallet approval only for DID updates.
-
-## Resolver And SDK Findings
-
-`@ckb-ccc/did-ckb@0.2.9` exposes the needed identifier codec, document codec, document resolution,
-live cell lookup, raw DID Metadata Cell access, DID creation, and document update primitives. It
-does not expose a targeted `verificationMethods` update helper, so the PoC updates the document
-object and passes it through `transferDidCkb`. Resolver trust remains limited to one configured CKB
-RPC endpoint; a light-client or multi-source verifier is full-project work. WIP-01 duplicate-cell
-conflict resolution is also full-project work; the PoC fails closed on duplicate live cells.
-
-## Vectors And Local Verification
-
-`vectors/vectors.json` contains the complete 23-case proof-plan matrix: positive software-key and
-WebAuthn fixtures, message validation, zero and duplicate cell resolution, key selection, signature
-encoding and key mismatch, curve confusion, and WebAuthn origin, challenge, RP ID, presence, and
-type failures. Every negative records the verifier step where it must fail. `npm run test:vectors`
-runs the matrix and checks the expected named failure and step.
-
-Latest local audit for this report:
-
-```text
-npm run build        pass
-npm test             pass
-npm run probe:sdk    pass
-npm run test -w @ckb-passport/siwd-verify -- --run test/resolver.live.test.ts pass
-npm run audit:h4     pass
-npm run drill:check  pass
-npm run demo:check   pass
-npm run evidence:check pass
-```
-
-## Capacity And Explorer Evidence
-
-No capacity number is recorded because no live DID update transaction has been submitted in this
-checkout. The resolved DID cell currently reports `55600000000` shannons before any Passport
-update. The testnet DID is now available, but `npm run evidence:explorer` still requires
-`CKB_PASSPORT_AUTH_DID_KEY`, `CKB_PASSPORT_UPDATE_TX_HASH`, and optional
-`CKB_PASSPORT_UPDATE_CAPACITY_SHANNONS` before it can print a Pudge testnet explorer transaction
-URL. Until those values exist, `EXPLORER-EVIDENCE.md` remains marked as not captured.
-
-## Recording Evidence
-
-`RECORDING.md` defines the expected video artifact and required scenes: tests passing, auth-key
-registration or exact H3 failure, DID update or exact update blocker, session contents after
-sign-in, and identical-proof replay rejection. No recording is present in this checkout, and
-`npm run recording:verify` fails with `recording_missing` until a non-empty recording file is
-provided.
-
-## Full Project Implication
-
-The local implementation shows the protocol shape is viable enough to proceed to a live gate: the
-canonical message, DID resolver, DID document decode, key selection, software/WebAuthn proof
-verification, replay protection, session issuing, vectors, demo, and H4 source audit are all in
-place. The full project should not treat passkey-based Passport as de-risked until H3 is completed
-on CKB testnet and the explorer/recording evidence is captured. If the live update rejects arbitrary
-P-256 `did:key` values or fails to round-trip, the fallback scope is the software auth key with its
-lower-assurance storage limitation documented here.
-
-## Final Acceptance Status
-
-`ACCEPTANCE.md` and `npm run acceptance:verify` track the original acceptance criteria. Local
-criteria pass: one-command startup is documented, vectors run under `npm test`, replay rejection is
-covered, H1 has read-only live DID resolution evidence, H4 source/session audit passes, and this
-report states H1 through H4. Live criteria remain incomplete until a real testnet DID update,
-explorer transaction, platform-authenticator sign-in, and recording are captured.
+Message verification, conflict-safe resolution, negative vectors, and DID-only sessions can shrink
+because their PoC risks are now closed locally. Live DID mutation, wallet compatibility, confirmation
+handling, passkey portability across browser profiles, and evidence capture must remain early gates.
+No production scope should assume H3 or H4 until those two recorded demonstrations pass.

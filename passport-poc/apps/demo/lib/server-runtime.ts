@@ -15,6 +15,7 @@ import {
   InMemorySessionService,
   loadPassportPocConfig,
   resolveDidCell,
+  siwdFailureStep,
   verifySiwdMessageChecks,
   verifySiwdProof,
   verifySoftwareSignature,
@@ -131,6 +132,7 @@ export async function verifyAuthKeyProofOfPossession(
   if (!messageChecks.ok) {
     return {
       ...messageChecks,
+      failsAtStep: siwdFailureStep(messageChecks.code),
       did,
       keyId,
       didKey,
@@ -143,6 +145,7 @@ export async function verifyAuthKeyProofOfPossession(
       return {
         ok: false,
         code: "proof_did_mismatch",
+        failsAtStep: "1",
         message: "Proof DID must match the DID receiving this auth key",
         did,
         keyId,
@@ -153,6 +156,7 @@ export async function verifyAuthKeyProofOfPossession(
       return {
         ok: false,
         code: "proof_key_id_mismatch",
+        failsAtStep: "1",
         message: "Proof key ID must match the DID document key ID",
         did,
         keyId,
@@ -167,6 +171,7 @@ export async function verifyAuthKeyProofOfPossession(
       return {
         ok: false,
         code: "did_key_invalid",
+        failsAtStep: "11",
         message:
           error instanceof Error ? error.message : "did:key could not be decoded",
         did,
@@ -197,6 +202,7 @@ export async function verifyAuthKeyProofOfPossession(
     if (!signature.ok) {
       return {
         ...signature,
+        failsAtStep: siwdFailureStep(signature.code),
         did,
         keyId,
         didKey,
@@ -208,6 +214,7 @@ export async function verifyAuthKeyProofOfPossession(
       return {
         ok: false,
         code: committed.code,
+        failsAtStep: siwdFailureStep(committed.code),
         message: `Nonce commit failed: ${committed.code}`,
         did,
         keyId,
@@ -422,6 +429,28 @@ export async function verifyProofFromUi(
     maxAge: maxAgeSeconds(issued.session),
   });
   return { response };
+}
+
+export async function verifyCrossOriginProofFromUi(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const proof = "proof" in body ? body.proof : body;
+  const { client, config } = await getRuntime();
+  const presentedToOrigin = "https://app-b.example";
+  const result = await verifySiwdProof({
+    proof,
+    expectedOrigin: presentedToOrigin,
+    expectedNetwork: config.network,
+    nonceService,
+    client,
+    rpId: new URL(presentedToOrigin).hostname,
+  });
+
+  return {
+    ...result,
+    proofMintedFor: config.expectedOrigin,
+    presentedToOrigin,
+  };
 }
 
 export function currentSession(request: NextRequest): Record<string, unknown> {

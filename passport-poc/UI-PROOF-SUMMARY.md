@@ -22,9 +22,11 @@ This proves the passkey can become a DID verification method candidate.
 
 ### 3. Proof Of Possession Happens Before Update
 
-Before the DID is updated, the UI asks the new passkey to sign a fresh challenge.
+Before the DID is updated, the UI asks the new passkey to sign a fresh challenge. The Register tab
+also offers a wrong-key check that signs with the real passkey but claims a different `did:key`.
 
-This proves the browser actually controls the passkey being added. A random or pasted `did:key` cannot be registered unless the matching private key signs first.
+The wrong-key proof is rejected before transaction preparation. This proves the positive path and
+the required refusal path use the same verification boundary.
 
 ### 4. Wallet Approval Updates The DID
 
@@ -40,7 +42,10 @@ This proves the key shown by the UI is the same key written into the resolved DI
 
 ### 6. Passkey Sign-In Works Without Wallet Use
 
-The Sign In tab asks the registered passkey to sign a SIWD login challenge.
+The Sign In tab accepts a DID independently of wallet connection and asks a discoverable platform
+passkey to sign a SIWD login challenge. Registration requires a platform authenticator, resident
+credential, and user verification so the sign-in profile does not need a credential ID copied from
+the registration profile.
 
 This proves login can happen with the DID authentication key instead of the wallet spend key. No wallet approval, CKB transaction, or gas is needed for sign-in.
 
@@ -48,13 +53,20 @@ This proves login can happen with the DID authentication key instead of the wall
 
 After sign-in succeeds, the UI shows that the session belongs to the DID and key ID.
 
-This proves the login session is based on the DID authentication key, not on a wallet address.
+It also states that no wallet address field is present. This proves the login session is based on
+the DID authentication key, not on a wallet address.
 
 ### 8. Replay Protection Is Visible
 
 The UI can retry the same sign-in proof and show that it is rejected.
 
 This proves the nonce is single-use and an old proof cannot be reused.
+
+### 9. Cross-Origin Rejection Is Visible
+
+Before accepting a valid sign-in, the UI presents the same proof to a different application origin.
+The verifier rejects it and shows the exact verifier step. The original nonce remains usable because
+failed proofs do not consume challenges.
 
 ## Proof Boundary
 
