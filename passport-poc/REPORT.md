@@ -85,11 +85,11 @@ conflict resolution is also full-project work; the PoC fails closed on duplicate
 
 ## Vectors And Local Verification
 
-`vectors/vectors.json` contains positive software-key and WebAuthn fixtures plus every required negative
-case: wrong domain, wrong URI origin, expired message, future `issuedAt`, replayed nonce, absent
-`keyId`, unsupported multicodec, high-S signature, WebAuthn origin mismatch, challenge mismatch,
-User Present clear, zero live DID cells, and duplicate live DID cells. `npm test` runs the vector
-runner and checks that each case matches its expected pass or named failure result.
+`vectors/vectors.json` contains the complete 23-case proof-plan matrix: positive software-key and
+WebAuthn fixtures, message validation, zero and duplicate cell resolution, key selection, signature
+encoding and key mismatch, curve confusion, and WebAuthn origin, challenge, RP ID, presence, and
+type failures. Every negative records the verifier step where it must fail. `npm run test:vectors`
+runs the matrix and checks the expected named failure and step.
 
 Latest local audit for this report:
 

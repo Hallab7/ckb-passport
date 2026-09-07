@@ -21,8 +21,8 @@ Current result:
 | Sign-in works with platform authenticator only | Unresolved | Requires live browser recording after DID update. |
 | Server session contains DID and no address | Pass | `npm run audit:h4` passes. |
 | Replay of identical proof is rejected | Pass | `vectors.json` includes `replayed-nonce` expecting `nonce_consumed`. |
-| Synthetic duplicate live DID cells are rejected | Pass | `resolver.test.ts` covers `did_ambiguous`; `vectors.json` includes `did-ambiguous-live-cells`. |
-| `npm test` runs vectors | Pass | Vector runner tests are part of `npm test`. |
+| Synthetic duplicate live DID cells are rejected | Pass | `resolver.test.ts` covers `did_ambiguous`; `vectors.json` includes `duplicate-cells`. |
+| One command runs the complete vector matrix | Pass | `npm run test:vectors` runs all 23 proof-plan cases and validates each failure step. |
 | Every vector matches expected pass/fail result | Pass | `npm test` passes locally. |
 | `REPORT.md` states H1 through H4 outcomes | Pass | Final report is present. |
 

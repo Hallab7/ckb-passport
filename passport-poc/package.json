@@ -13,6 +13,8 @@
     "build": "node scripts/build-workspaces.mjs",
     "probe:sdk": "node scripts/probe-did-sdk.mjs",
     "test": "node scripts/test-workspaces.mjs",
+    "test:vectors": "npm run test -w @ckb-passport/siwd-verify -- --run test/vector-runner.test.ts",
+    "generate:vectors": "node scripts/generate-vectors.mjs",
     "update:did": "node scripts/update-did-method.mjs",
     "check:roundtrip": "node scripts/check-did-roundtrip.mjs",
     "drill:testnet": "node scripts/e2e-testnet-drill.mjs",

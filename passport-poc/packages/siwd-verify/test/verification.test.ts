@@ -12,7 +12,7 @@ import {
 describe("verifySiwdProof nonce transaction", () => {
   it("does not consume a nonce when signature verification fails", async () => {
     const baseline = (vectors as SiwdTestVector[]).find(
-      (vector) => vector.name === "software-positive-local-fixture",
+      (vector) => vector.name === "valid-software",
     );
     if (!baseline) {
       throw new Error("software positive vector is missing");

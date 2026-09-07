@@ -16,6 +16,7 @@ export type SiwdTestVector = {
   network: SiwdNetwork;
   expect: SiwdVectorExpectation;
   reason: string;
+  failsAtStep?: string;
   expectedFailure?: string;
   rpId?: string;
   now?: string;
@@ -32,6 +33,7 @@ export type SiwdVectorEvaluation = {
   expected: string;
   actual: string;
   reason: string;
+  failsAtStep?: string;
 };
 
 export async function evaluateSiwdVector(
@@ -56,6 +58,7 @@ export async function evaluateSiwdVector(
     expected: expected ?? "fail",
     actual,
     reason: vector.reason,
+    failsAtStep: result.ok ? undefined : result.failsAtStep,
   };
 }
 

@@ -52,7 +52,7 @@ describe("verifySiwdKeyChecks", () => {
 
     expect(result).toMatchObject({
       ok: false,
-      code: "did_cell_resolve_failed",
+      code: "did_not_found_or_deactivated",
     });
   });
 

@@ -17,6 +17,7 @@ import {
   verifyWebAuthnSignature,
   type VerifyWebAuthnSignatureResult,
 } from "./webauthn-verify.js";
+import { siwdFailureStep } from "./failure-step.js";
 
 export type VerifySiwdProofOptions = Omit<
   VerifySiwdMessageChecksOptions,
@@ -44,6 +45,7 @@ export type VerifySiwdProofResult =
       ok: false;
       code: VerifySiwdProofFailureCode;
       message: string;
+      failsAtStep: string;
     };
 
 export async function verifySiwdProof(
@@ -57,7 +59,7 @@ export async function verifySiwdProof(
     now: options.now,
   });
   if (!messageChecks.ok) {
-    return messageChecks;
+    return { ...messageChecks, failsAtStep: siwdFailureStep(messageChecks.code) };
   }
 
   let nonceCommitted = false;
@@ -72,6 +74,7 @@ export async function verifySiwdProof(
         ok: false,
         code: keyChecks.code,
         message: keyChecks.message,
+        failsAtStep: siwdFailureStep(keyChecks.code),
       };
     }
 
@@ -89,7 +92,7 @@ export async function verifySiwdProof(
           });
 
     if (!signature.ok) {
-      return signature;
+      return { ...signature, failsAtStep: siwdFailureStep(signature.code) };
     }
 
     const committed = options.nonceService.commit(messageChecks.fields.nonce);
@@ -98,6 +101,7 @@ export async function verifySiwdProof(
         ok: false,
         code: committed.code,
         message: `nonce commit failed: ${committed.code}`,
+        failsAtStep: siwdFailureStep(committed.code),
       };
     }
     nonceCommitted = true;

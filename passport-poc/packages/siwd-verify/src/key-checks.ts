@@ -23,7 +23,9 @@ export type VerifySiwdKeyChecksResult =
   | {
       ok: false;
       code:
-        | "did_cell_resolve_failed"
+        | "did_invalid"
+        | "did_not_found_or_deactivated"
+        | "did_ambiguous"
         | "did_document_decode_failed"
         | "verification_method_missing"
         | "verification_method_invalid";
@@ -43,7 +45,7 @@ export async function verifySiwdKeyChecks(
   if (!resolution.ok) {
     return {
       ok: false,
-      code: "did_cell_resolve_failed",
+      code: resolution.code,
       message: resolution.message,
       did: options.did,
       keyId: options.keyId,

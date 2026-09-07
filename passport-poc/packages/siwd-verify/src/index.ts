@@ -33,6 +33,7 @@ export type {
   WebAuthnSiwdProofEnvelope,
 } from "./proof.js";
 export { evaluateSiwdVector } from "./vector-runner.js";
+export { siwdFailureStep } from "./failure-step.js";
 export type {
   SiwdTestVector,
   SiwdVectorEvaluation,

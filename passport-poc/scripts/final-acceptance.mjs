@@ -4,17 +4,25 @@ const checkOnly = process.argv.includes("--check");
 const requiredNegativeVectors = [
   "wrong-domain",
   "wrong-uri-origin",
-  "expired-message",
-  "issued-at-future",
+  "bad-version",
+  "wrong-network",
+  "expired",
+  "future-issued",
   "replayed-nonce",
-  "key-id-absent",
+  "malformed-did",
+  "did-not-found",
+  "duplicate-cells",
+  "keyid-absent",
   "unsupported-multicodec",
-  "high-s-signature",
-  "webauthn-client-origin-mismatch",
-  "webauthn-challenge-mismatch",
-  "webauthn-user-present-clear",
-  "did-zero-live-cells",
-  "did-ambiguous-live-cells",
+  "wrong-key-signature",
+  "high-s",
+  "der-encoded",
+  "curve-confusion",
+  "webauthn-origin-mismatch",
+  "challenge-mismatch",
+  "rpid-mismatch",
+  "up-clear",
+  "wrong-type",
 ];
 
 if (checkOnly) {
@@ -109,14 +117,14 @@ const items = [
   },
   {
     id: "duplicate_live_cells",
-    status: vectorNames.has("did-ambiguous-live-cells") ? "pass" : "fail",
+    status: vectorNames.has("duplicate-cells") ? "pass" : "fail",
     evidence:
-      "vectors.json contains did-ambiguous-live-cells and resolver tests fail closed",
+      "vectors.json contains duplicate-cells and resolver tests fail closed",
   },
   {
     id: "vectors_run_by_tests",
     status:
-      missingNegativeVectors.length === 0 && vectorNames.size >= 14 ? "pass" : "fail",
+      missingNegativeVectors.length === 0 && vectorNames.size === 23 ? "pass" : "fail",
     evidence:
       missingNegativeVectors.length === 0
         ? "vectors.json includes all required negatives and positive fixtures"
