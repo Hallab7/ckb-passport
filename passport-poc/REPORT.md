@@ -2,6 +2,8 @@
 
 Date: 2026-09-07
 
+Implementation commits: `efe92c6`, `e723fc2`, `2759b2e`
+
 Network: CKB testnet
 
 DID tested: supplied through `CKB_PASSPORT_LIVE_DID`

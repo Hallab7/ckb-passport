@@ -5,10 +5,12 @@ const defaultRecordingPath = "evidence/passport-poc-recording.mp4";
 const recordingPath = process.env.CKB_PASSPORT_RECORDING ?? defaultRecordingPath;
 const requiredScenes = [
   "tests passing",
-  "auth-key registration or exact H3 failure",
-  "DID update or exact update blocker",
-  "session contents after sign-in",
-  "identical proof replay rejected",
+  "profile 1 wallet connection and complete owned-DID choice",
+  "valid proof-of-possession and wrong-key refusal before transaction preparation",
+  "confirmed update hash, explorer page, and exact auth-1 round trip",
+  "profile 2 sign-in without a wallet extension",
+  "session DID and key ID with no address field",
+  "cross-origin and identical-proof replay rejection with failure steps",
 ];
 
 if (checkOnly) {
