@@ -1324,10 +1324,19 @@ async function postJson(path: string, body: unknown): Promise<JsonRecord> {
 
 async function parseApiResponse(response: Response): Promise<JsonRecord> {
   const contentType = response.headers.get("content-type") ?? "";
-  const body =
-    contentType.includes("application/json")
-      ? ((await response.json()) as JsonRecord)
-      : ({ ok: false, message: await response.text() } satisfies JsonRecord);
+  if (!contentType.includes("application/json")) {
+    await response.text();
+    return {
+      ok: false,
+      code: response.status === 404 ? "api_route_not_found" : "api_response_invalid",
+      message:
+        response.status === 404
+          ? "This action is not available in the deployed version. Redeploy the latest commit."
+          : `The server returned an unexpected response (${response.status}).`,
+      httpStatus: response.status,
+    };
+  }
+  const body = (await response.json()) as JsonRecord;
   return {
     ...body,
     httpStatus: response.status,
